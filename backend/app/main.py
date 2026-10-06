@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes import health
+from app.routes import health, documents
 
 
 app = FastAPI(
@@ -10,6 +10,7 @@ app = FastAPI(
 
 
 app.include_router(health.router)
+app.include_router(documents.router)
 
 
 @app.get("/")
