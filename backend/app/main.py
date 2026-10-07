@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.routes import health, documents
-
+from app.routes import ask
 
 app = FastAPI(
     title="LexIntel AI API",
@@ -11,7 +11,9 @@ app = FastAPI(
 
 app.include_router(health.router)
 app.include_router(documents.router)
-
+app.include_router(
+    ask.router
+)
 
 @app.get("/")
 def root():

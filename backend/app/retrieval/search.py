@@ -1,11 +1,9 @@
 from sqlalchemy.orm import Session
 
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-
 from app.models.legal_document import LegalDocument
-from app.embeddings.generator import generate_embedding
-
+from app.retrieval.semantic import semantic_search
+from app.retrieval.keyword import keyword_search
+from app.retrieval.hybrid import hybrid_rank
 
 def search_documents(
     query: str,
@@ -23,87 +21,30 @@ def search_documents(
     # Semantic Search (pgvector)
     # -------------------------
 
-    query_embedding = generate_embedding(query)
 
-
-    semantic_results = (
-        db.query(
-            LegalDocument,
-            LegalDocument.embedding.cosine_distance(
-                query_embedding
-            ).label("distance")
-        )
-        .all()
+    semantic_scores = semantic_search(
+        query,
+        db
     )
-
-
-    semantic_scores = {}
-
-    for document, distance in semantic_results:
-        semantic_scores[document.id] = 1 - float(distance)
-
 
 
     # -------------------------
     # TF-IDF Keyword Search
     # -------------------------
 
-    corpus = [
-        document.content
-        for document in documents
-    ]
-
-
-    vectorizer = TfidfVectorizer(
-        stop_words="english"
-    )
-
-
-    tfidf_matrix = vectorizer.fit_transform(
-        corpus + [query]
-    )
-
-
-    keyword_scores = cosine_similarity(
-        tfidf_matrix[-1],
-        tfidf_matrix[:-1]
-    )[0]
-
+    keyword_scores = keyword_search(
+        query,
+        documents
+    )   
 
 
     # -------------------------
     # Hybrid Ranking
     # -------------------------
 
-    results = []
-
-
-    for index, document in enumerate(documents):
-
-        semantic_score = semantic_scores[document.id]
-
-        keyword_score = float(keyword_scores[index])
-
-
-        hybrid_score = (
-            0.6 * semantic_score
-            +
-            0.4 * keyword_score
-        )
-
-
-        results.append(
-            (
-                document,
-                hybrid_score
-            )
-        )
-
-
-    results.sort(
-        key=lambda x: x[1],
-        reverse=True
+    return hybrid_rank(
+        documents,
+        semantic_scores,
+        keyword_scores,
+        limit
     )
-
-
-    return results[:limit]

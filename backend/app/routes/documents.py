@@ -7,6 +7,7 @@ import os
 from app.database import SessionLocal
 from app.models.legal_document import LegalDocument
 from app.schemas.document import DocumentCreate, DocumentResponse
+from app.schemas.search import SearchResult
 from app.embeddings.generator import generate_embedding
 from app.retrieval.search import search_documents
 
@@ -80,8 +81,10 @@ def upload_document(
 
     return document
 
-
-@router.get("/search")
+@router.get(
+    "/search",
+    response_model=list[SearchResult]
+)
 def search_document(
     q: str,
     db: Session = Depends(get_db)
@@ -93,8 +96,8 @@ def search_document(
             "id": document.id,
             "title": document.title,
             "category": document.category,
-            "content": document.content,
-            "hybrid_score": float(distance)
+            "snippet": document.content[:500],
+            "score": float(score)
         }
-        for document, distance in results
+        for document, score in results
     ]
