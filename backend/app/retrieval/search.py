@@ -1,9 +1,10 @@
 from sqlalchemy.orm import Session
 
-from app.models.legal_document import LegalDocument
+from app.models.document_chunk import DocumentChunk
 from app.retrieval.semantic import semantic_search
 from app.retrieval.keyword import keyword_search
 from app.retrieval.hybrid import hybrid_rank
+
 
 def search_documents(
     query: str,
@@ -11,39 +12,23 @@ def search_documents(
     limit: int = 5
 ):
 
-    documents = db.query(LegalDocument).all()
+    chunks = db.query(DocumentChunk).all()
 
-    if not documents:
+    if not chunks:
         return []
-
-
-    # -------------------------
-    # Semantic Search (pgvector)
-    # -------------------------
-
 
     semantic_scores = semantic_search(
         query,
         db
     )
 
-
-    # -------------------------
-    # TF-IDF Keyword Search
-    # -------------------------
-
     keyword_scores = keyword_search(
         query,
-        documents
-    )   
-
-
-    # -------------------------
-    # Hybrid Ranking
-    # -------------------------
+        chunks
+    )
 
     return hybrid_rank(
-        documents,
+        chunks,
         semantic_scores,
         keyword_scores,
         limit

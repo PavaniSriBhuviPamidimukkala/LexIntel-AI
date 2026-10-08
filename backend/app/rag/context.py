@@ -1,28 +1,33 @@
 def build_context(results):
     """
-    Converts retrieved legal documents
-    into LLM readable context.
+    Converts retrieved document chunks
+    into LLM-readable legal context.
     """
 
     context_parts = []
 
-    for index, (document, score) in enumerate(results):
+    for index, (chunk, score) in enumerate(results):
+
+        document = chunk.document
 
         context_parts.append(
             f"""
 Source {index + 1}
 
-Title:
+Document:
 {document.title}
 
 Category:
 {document.category}
 
+Page:
+{chunk.page_number}
+
 Relevance Score:
 {score}
 
 Content:
-{document.content[:2000]}
+{chunk.content[:2000]}
 """
         )
 

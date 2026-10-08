@@ -1,5 +1,5 @@
 from app.database import engine, Base
-from app.models import LegalDocument
+from app.models import LegalDocument, DocumentChunk
 
 
 def create_tables():

@@ -4,17 +4,19 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 def keyword_search(
     query: str,
-    documents
+    chunks
 ):
     """
-    Performs keyword based search
-    using TF-IDF.
+    Performs TF-IDF keyword search over document chunks.
     """
 
     corpus = [
-        document.content
-        for document in documents
+        chunk.content
+        for chunk in chunks
     ]
+
+    if not corpus:
+        return {}
 
     vectorizer = TfidfVectorizer(
         stop_words="english"
@@ -31,8 +33,8 @@ def keyword_search(
 
     scores = {}
 
-    for index, document in enumerate(documents):
-        scores[document.id] = float(
+    for index, chunk in enumerate(chunks):
+        scores[chunk.id] = float(
             keyword_scores[index]
         )
 

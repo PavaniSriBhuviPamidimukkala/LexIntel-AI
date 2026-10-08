@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime
+from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey
 from sqlalchemy.sql import func
 
 from pgvector.sqlalchemy import Vector
@@ -7,13 +7,19 @@ from app.database import Base
 
 from sqlalchemy.orm import relationship
 
-class LegalDocument(Base):
-    __tablename__ = "legal_documents"
+class DocumentChunk(Base):
 
-    id = Column(Integer, primary_key=True, index=True)
+    __tablename__ = "document_chunks"
 
-    title = Column(
-        String,
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    document_id = Column(
+        Integer,
+        ForeignKey("legal_documents.id"),
         nullable=False
     )
 
@@ -22,8 +28,8 @@ class LegalDocument(Base):
         nullable=False
     )
 
-    category = Column(
-        String,
+    page_number = Column(
+        Integer,
         nullable=True
     )
 
@@ -36,8 +42,7 @@ class LegalDocument(Base):
         DateTime(timezone=True),
         server_default=func.now()
     )
-    chunks = relationship(
-        "DocumentChunk",
-        back_populates="document",
-        cascade="all, delete-orphan"
+    document = relationship(
+        "LegalDocument",
+        back_populates="chunks"
     )

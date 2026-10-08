@@ -44,6 +44,6 @@ def rag_pipeline(
                 "category": document.category,
                 "score": round(float(score), 4)
             }
-            for document, score in results
+            for chunk, score in results
         ]
     }

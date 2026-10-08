@@ -1,25 +1,25 @@
 def hybrid_rank(
-    documents,
+    chunks,
     semantic_scores,
     keyword_scores,
     limit=5
 ):
     """
     Combines semantic and keyword scores
-    and returns ranked documents.
+    and returns ranked document chunks.
     """
 
     results = []
 
-    for document in documents:
+    for chunk in chunks:
 
         semantic_score = semantic_scores.get(
-            document.id,
+            chunk.id,
             0
         )
 
         keyword_score = keyword_scores.get(
-            document.id,
+            chunk.id,
             0
         )
 
@@ -31,7 +31,7 @@ def hybrid_rank(
 
         results.append(
             (
-                document,
+                chunk,
                 hybrid_score
             )
         )
