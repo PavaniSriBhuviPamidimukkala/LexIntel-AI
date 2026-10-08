@@ -1,6 +1,61 @@
 import re
 
 
+def clean_pdf_text(text: str):
+
+    """
+    Remove common PDF extraction noise:
+    - page numbers
+    - statutory footer text
+    - repeated headers
+    """
+
+    if not text:
+        return ""
+
+
+    # Remove page footer examples:
+    # Page 1 of 2
+    # Page 2 of 2
+    text = re.sub(
+        r"Page\s+\d+\s+of\s+\d+",
+        "",
+        text,
+        flags=re.IGNORECASE
+    )
+
+
+    # Remove statutory footer lines
+    text = re.sub(
+        r"Statutory Sample Document.*",
+        "",
+        text,
+        flags=re.IGNORECASE
+    )
+
+
+    # Remove multiple spaces
+    text = re.sub(
+        r"[ \t]+",
+        " ",
+        text
+    )
+
+
+    # Remove excessive blank lines
+    text = re.sub(
+        r"\n\s*\n\s*\n+",
+        "\n\n",
+        text
+    )
+
+
+    return text.strip()
+
+
+
+
+
 def split_text(
     text: str,
     chunk_size: int = 800,
@@ -31,7 +86,13 @@ def split_text(
         start = end - overlap
 
 
+        if start < 0:
+            start = 0
+
+
     return chunks
+
+
 
 
 
@@ -41,8 +102,6 @@ def extract_legal_metadata(text: str):
     section = None
     section_title = None
 
-
-    # Detect chapter
 
     chapter_match = re.search(
         r"(CHAPTER\s+[IVXLCDM]+\s+[—-].+)",
@@ -59,8 +118,6 @@ def extract_legal_metadata(text: str):
             .strip()
         )
 
-
-    # Detect sections
 
     section_match = re.search(
         r"(\d+)\.\s+([A-Z][^—\n]+)",
@@ -100,28 +157,13 @@ def extract_legal_metadata(text: str):
 
 
 
+
+
 def split_pages(
     pages: list[str],
     chunk_size: int = 800,
     overlap: int = 150
 ):
-
-    """
-    Legal aware page chunking.
-
-    Output:
-
-    [
-        {
-          page_number:1,
-          content:"...",
-          chapter:"...",
-          section:"Section 4",
-          section_title:"Grounds for processing..."
-        }
-    ]
-
-    """
 
     page_chunks = []
 
@@ -138,14 +180,19 @@ def split_pages(
     ):
 
 
-        if not page_text.strip():
+        cleaned_page = clean_pdf_text(
+            page_text
+        )
+
+
+        if not cleaned_page:
 
             continue
 
 
 
         chunks = split_text(
-            page_text,
+            cleaned_page,
             chunk_size,
             overlap
         )
@@ -161,20 +208,15 @@ def split_pages(
 
             if metadata["chapter"]:
 
-                current_chapter = (
-                    metadata["chapter"]
-                )
+                current_chapter = metadata["chapter"]
+
 
 
             if metadata["section"]:
 
-                current_section = (
-                    metadata["section"]
-                )
+                current_section = metadata["section"]
 
-                current_title = (
-                    metadata["section_title"]
-                )
+                current_title = metadata["section_title"]
 
 
 
