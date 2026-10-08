@@ -4,15 +4,30 @@ from app.rag.providers.gemini import GeminiProvider
 from app.rag.providers.ollama import OllamaProvider
 
 
-def get_llm_provider():
+PROVIDERS = {
+    "gemini": GeminiProvider,
+    "ollama": OllamaProvider,
+}
 
-    if settings.LLM_PROVIDER == "gemini":
-        return GeminiProvider()
 
-    elif settings.LLM_PROVIDER == "ollama":
-        return OllamaProvider()
+def get_provider(provider_name: str):
+    """
+    Returns an LLM provider instance.
+    """
 
-    else:
+    provider = PROVIDERS.get(provider_name.lower())
+
+    if provider is None:
         raise ValueError(
-            f"Unsupported LLM provider: {settings.LLM_PROVIDER}"
+            f"Unsupported LLM provider: {provider_name}"
         )
+
+    return provider()
+
+
+def get_llm_provider():
+    """
+    Returns the configured default provider.
+    """
+
+    return get_provider(settings.LLM_PROVIDER)

@@ -1,8 +1,11 @@
-from app.rag.providers.factory import get_llm_provider
+from app.rag.llm_manager import LLMManager
 
 
-def generate_answer(prompt: str):
+def generate_answer(prompt: str) -> str:
+    """
+    Generates an answer using the configured LLM.
+    """
 
-    provider = get_llm_provider()
+    manager = LLMManager()
 
-    return provider.generate(prompt)
+    return manager.generate(prompt)

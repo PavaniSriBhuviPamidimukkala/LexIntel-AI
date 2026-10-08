@@ -1,8 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+import logging
 
 from app.database import SessionLocal
 from app.rag.pipeline import rag_pipeline
+
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter(
@@ -19,16 +23,24 @@ def get_db():
         db.close()
 
 
-
 @router.post("/")
 def ask_question(
     question: str,
     db: Session = Depends(get_db)
 ):
 
-    response = rag_pipeline(
-        question,
-        db
-    )
+    try:
 
-    return response
+        return rag_pipeline(
+            question,
+            db
+        )
+
+    except Exception as e:
+
+        logger.exception("RAG pipeline failed")
+
+        raise HTTPException(
+            status_code=503,
+            detail="AI service is temporarily unavailable. Please try again later."
+        )
