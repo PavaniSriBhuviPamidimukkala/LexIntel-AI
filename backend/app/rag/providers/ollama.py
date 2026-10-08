@@ -11,7 +11,7 @@ class OllamaProvider(LLMProvider):
         response = requests.post(
             "http://localhost:11434/api/generate",
             json={
-                "model": settings.LLM_MODEL,
+                "model": settings.OLLAMA_MODEL,
                 "prompt": prompt,
                 "stream": False
             },

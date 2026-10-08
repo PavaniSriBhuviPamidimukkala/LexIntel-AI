@@ -1,11 +1,20 @@
-from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey
+from sqlalchemy import (
+    Column,
+    Integer,
+    Text,
+    ForeignKey,
+    DateTime,
+    JSON,
+    String
+)
+
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from pgvector.sqlalchemy import Vector
 
 from app.database import Base
 
-from sqlalchemy.orm import relationship
 
 class DocumentChunk(Base):
 
@@ -30,6 +39,16 @@ class DocumentChunk(Base):
 
     page_number = Column(
         Integer,
+        nullable=False
+    )
+
+    section = Column(
+        String,
+        nullable=True
+    )
+
+    metadata_json = Column(
+        JSON,
         nullable=True
     )
 
@@ -42,6 +61,7 @@ class DocumentChunk(Base):
         DateTime(timezone=True),
         server_default=func.now()
     )
+
     document = relationship(
         "LegalDocument",
         back_populates="chunks"

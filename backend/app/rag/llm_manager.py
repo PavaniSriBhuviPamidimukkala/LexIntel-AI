@@ -35,8 +35,7 @@ class LLMManager:
             except Exception as e:
 
                 print(
-                    f"{provider_name} failed:"
-                    f" {e}"
+                    f"{provider_name} failed: {e}"
                 )
 
                 last_exception = e

@@ -5,6 +5,8 @@ from app.rag.context import build_context
 from app.rag.prompts import build_prompt
 from app.rag.generator import generate_answer
 
+from app.citations.engine import generate_citations
+
 
 def rag_pipeline(
     question: str,
@@ -12,7 +14,7 @@ def rag_pipeline(
     limit: int = 5
 ):
 
-    # 1. Retrieve relevant documents
+    # 1. Retrieve relevant document chunks
     results = search_documents(
         question,
         db,
@@ -20,30 +22,39 @@ def rag_pipeline(
     )
 
 
-    # 2. Build context
-    context = build_context(results)
+    # 2. Build context from retrieved chunks
+    context = build_context(
+        results
+    )
 
 
-    # 3. Create legal prompt
+    # 3. Build legal RAG prompt
     prompt = build_prompt(
         question,
         context
     )
 
 
-    # 4. Generate answer
-    answer = generate_answer(
-        prompt
+    # 4. Generate AI answer
+    try:
+        answer = generate_answer(
+            prompt
+        )
+
+    except Exception:
+        answer = (
+            "AI generation is temporarily unavailable.\n\n"
+            "Relevant legal information is provided through citations."
+        )
+
+
+    # 5. Generate legal citations
+    citations = generate_citations(
+        results
     )
+
 
     return {
         "answer": answer,
-        "sources": [
-            {
-                "title": document.title,
-                "category": document.category,
-                "score": round(float(score), 4)
-            }
-            for chunk, score in results
-        ]
+        "citations": citations
     }

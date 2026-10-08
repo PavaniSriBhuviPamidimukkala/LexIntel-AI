@@ -19,7 +19,8 @@ class Settings(BaseSettings):
 
     # LLM Configuration
     LLM_PROVIDER: str
-    LLM_MODEL: str
+    GEMINI_MODEL: str
+    OLLAMA_MODEL: str
 
     GEMINI_API_KEY: Optional[str] = None
 

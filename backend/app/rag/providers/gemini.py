@@ -19,7 +19,7 @@ class GeminiProvider(LLMProvider):
 
         url = (
             "https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{settings.LLM_MODEL}:generateContent"
+            f"{settings.GEMINI_MODEL}:generateContent"
         )
 
         headers = {
