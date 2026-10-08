@@ -4,6 +4,7 @@ import logging
 
 from app.database import SessionLocal
 from app.rag.pipeline import rag_pipeline
+from app.schemas.ask import AskResponse
 
 
 logger = logging.getLogger(__name__)
@@ -23,7 +24,7 @@ def get_db():
         db.close()
 
 
-@router.post("/")
+@router.post("/", response_model=AskResponse)
 def ask_question(
     question: str,
     db: Session = Depends(get_db)
