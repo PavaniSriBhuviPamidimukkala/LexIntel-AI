@@ -8,13 +8,12 @@ class LLMManager:
 
         self.providers = [
             settings.LLM_PROVIDER,
-            "ollama"
+            "ollama",
         ]
 
     def generate(self, prompt: str):
 
         last_exception = None
-
         used = set()
 
         for provider_name in self.providers:
@@ -25,7 +24,6 @@ class LLMManager:
             used.add(provider_name)
 
             try:
-
                 print(f"Using provider: {provider_name}")
 
                 provider = get_provider(provider_name)
@@ -33,11 +31,15 @@ class LLMManager:
                 return provider.generate(prompt)
 
             except Exception as e:
-
                 print(
                     f"{provider_name} failed: {e}"
                 )
 
                 last_exception = e
 
-        raise last_exception
+        if last_exception:
+            raise last_exception
+
+        raise RuntimeError(
+            "No LLM providers configured"
+        )

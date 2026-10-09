@@ -1,0 +1,151 @@
+from app.evaluation.dataset import load_dataset
+
+from app.evaluation.metrics import (
+    hit_at_k,
+    section_hit,
+    precision_at_k,
+    reciprocal_rank
+)
+
+from app.retrieval.search import search_documents
+
+
+def evaluate(
+    db,
+    limit=5
+):
+
+    dataset = load_dataset()
+
+
+    results_report = []
+
+
+    total_hit = 0
+    total_section_hit = 0
+    total_precision = 0
+    total_mrr = 0
+
+
+
+    for item in dataset:
+
+
+        question = item["question"]
+
+        expected_document = (
+            item["expected_document"]
+        )
+
+        expected_section = (
+            item.get("expected_section")
+        )
+
+
+
+        results = search_documents(
+            question,
+            db,
+            limit
+        )
+
+
+
+        hit = hit_at_k(
+            results,
+            expected_document
+        )
+
+
+        section_score = 0
+
+        if expected_section:
+
+            section_score = section_hit(
+                results,
+                expected_section
+            )
+
+
+
+        precision = precision_at_k(
+            results,
+            expected_document
+        )
+
+
+        mrr = reciprocal_rank(
+            results,
+            expected_document
+        )
+
+
+
+        total_hit += hit
+
+        total_section_hit += section_score
+
+        total_precision += precision
+
+        total_mrr += mrr
+
+
+
+        results_report.append(
+            {
+                "question": question,
+
+                "expected_document":
+                    expected_document,
+
+                "expected_section":
+                    expected_section,
+
+                "hit":
+                    hit,
+
+                "section_hit":
+                    section_score,
+
+                "precision":
+                    precision,
+
+                "mrr":
+                    mrr
+            }
+        )
+
+
+
+    count = len(dataset)
+
+
+
+    return {
+
+
+        "total_questions":
+            count,
+
+
+        "average_hit_at_k":
+            total_hit / count,
+
+
+        "average_section_hit":
+            total_section_hit / count,
+
+
+        "average_precision":
+            total_precision / count,
+
+
+        "average_mrr":
+            total_mrr / count,
+
+
+        "details":
+            results_report
+
+    }
+    

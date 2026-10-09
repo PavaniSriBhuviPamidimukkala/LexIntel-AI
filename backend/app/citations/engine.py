@@ -27,6 +27,10 @@ def generate_citations(results):
             "source": chunk.document.title,
             "category": chunk.document.category,
             "page": chunk.page_number,
+            "section": chunk.section,
+            "chapter": (
+                chunk.metadata_json or {}
+            ).get("chapter"),
             "chunk_id": chunk.id,
             "quote": chunk.content[:500],
             "relevance": round(float(score), 4)

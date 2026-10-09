@@ -111,22 +111,18 @@ def extract_chapter(text):
 def extract_section(text):
 
     patterns = [
-
-        r"(Section\s+\d+[A-Za-z]?)",
-
-        r"(SECTION\s+\d+[A-Za-z]?)",
-
-        r"(Sec\.\s*\d+)",
-
-        r"(Article\s+\d+[A-Za-z]?)",
+        r"(SECTION\s+\d+[A-Za-z]?)"
+        r"(?=\s*[.\-—:]\s*|\s+(?-i:[A-Z])|\s*$)",
 
         r"(ARTICLE\s+\d+[A-Za-z]?)"
+        r"(?=\.\s+(?-i:[A-Z]))",
 
+        r"(Sec\.\s*\d+)"
+        r"(?=\s*[.\-—:]|\s*$)"
     ]
 
 
     for pattern in patterns:
-
 
         match = re.search(
             pattern,
@@ -137,7 +133,29 @@ def extract_section(text):
 
         if match:
 
-            return match.group(1).strip()
+            value = match.group(1).strip()
+
+
+            if value.lower().startswith("section"):
+
+                return value.upper()
+
+
+            if value.lower().startswith("article"):
+
+                number = re.search(
+                    r"\d+[A-Za-z]?",
+                    value
+                )
+
+                if number:
+
+                    return (
+                        f"Article {number.group()}"
+                    )
+
+
+            return value
 
 
     return None
@@ -359,36 +377,14 @@ def upload_document(
 
 
 
-        chapter=extract_chapter(
-            content
-        )
-
-
+        chapter = item.get("chapter")
         if chapter:
+            current_chapter = chapter
 
-            current_chapter=chapter
-
-
-
-
-
-        section=extract_section(
-            content
-        )
-
-
+        section = item.get("section")
         if section:
-
-            current_section=section
-
-            current_title=extract_section_title(
-                content
-            )
-
-
-
-
-
+            current_section = section
+            current_title = item.get("section_title")
 
         embedding=generate_embedding(
             content

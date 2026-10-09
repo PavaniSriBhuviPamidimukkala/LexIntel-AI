@@ -1,0 +1,27 @@
+[
+    {
+        "question": "What is Section 89 relief?",
+        "expected_document": "Section_89_Overview",
+        "expected_section": "SECTION 89"
+    },
+    {
+        "question": "What are the obligations of Data Fiduciary?",
+        "expected_document": "Digital Personal Data Protection Act 2023",
+        "expected_section": "Section 8"
+    },
+    {
+        "question": "What is Notice and Action Mechanism?",
+        "expected_document": "Digital Services Act (EU 2022_2065)",
+        "expected_section": "Article 16"
+    },
+    {
+        "question": "What is Section 56 of the Contract Act?",
+        "expected_document": "Section_56_Overview",
+        "expected_section": "Section 56"
+    },
+    {
+        "question": "What is Section 73 of the Contract Act?",
+        "expected_document": "Indian Contract Act 1872",
+        "expected_section": "Section 73"
+    }
+]

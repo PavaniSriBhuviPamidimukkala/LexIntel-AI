@@ -1,19 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 import logging
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
 from app.rag.pipeline import rag_pipeline
 from app.schemas.ask import AskResponse
 
-
 logger = logging.getLogger(__name__)
 
-
-router = APIRouter(
-    prefix="/ask",
-    tags=["RAG"]
-)
+router = APIRouter(prefix="/ask", tags=["RAG"])
 
 
 def get_db():
@@ -26,22 +22,21 @@ def get_db():
 
 @router.post("/", response_model=AskResponse)
 def ask_question(
-    question: str,
-    db: Session = Depends(get_db)
+    question: str = Query(..., min_length=1, max_length=2000),
+    db: Session = Depends(get_db),
 ):
-
-    try:
-
-        return rag_pipeline(
-            question,
-            db
+    # Reject empty or whitespace-only questions
+    if not question.strip():
+        raise HTTPException(
+            status_code=422,
+            detail="Question cannot be empty or contain only whitespace.",
         )
 
-    except Exception as e:
-
+    try:
+        return rag_pipeline(question.strip(), db)
+    except Exception:
         logger.exception("RAG pipeline failed")
-
         raise HTTPException(
             status_code=503,
-            detail="AI service is temporarily unavailable. Please try again later."
+            detail="The legal research service is temporarily unavailable.",
         )

@@ -1,0 +1,106 @@
+def hit_at_k(results, expected_document):
+    """
+    Returns 1 if expected document is retrieved.
+    """
+
+    for chunk, score in results:
+
+        if (
+            chunk.document.title.lower()
+            ==
+            expected_document.lower()
+        ):
+            return 1
+
+    return 0
+
+
+
+
+def section_hit(results, expected_section):
+
+    expected = (
+        expected_section
+        .lower()
+        .strip()
+    )
+
+
+    for chunk, score in results:
+
+        if not chunk.section:
+            continue
+
+
+        actual = (
+            chunk.section
+            .lower()
+            .strip()
+        )
+
+
+        if (
+            expected in actual
+            or
+            actual in expected
+        ):
+            return 1
+
+
+    return 0
+
+def precision_at_k(results, expected_document):
+    """
+    Relevant retrieved documents / total retrieved documents
+    """
+
+    if not results:
+        return 0
+
+
+    relevant = 0
+
+
+    for chunk, score in results:
+
+        if (
+            chunk.document.title.lower()
+            ==
+            expected_document.lower()
+        ):
+            relevant += 1
+
+
+    return relevant / len(results)
+
+
+
+def recall_at_k(results, expected_document):
+    """
+    Since one expected document exists,
+    recall is same as hit@k.
+    """
+
+    return hit_at_k(
+        results,
+        expected_document
+    )
+
+
+
+def reciprocal_rank(results, expected_document):
+    """
+    Mean Reciprocal Rank calculation.
+    """
+
+    for index, (chunk, score) in enumerate(results):
+
+        if (
+            chunk.document.title.lower()
+            ==
+            expected_document.lower()
+        ):
+            return 1 / (index + 1)
+
+
+    return 0
