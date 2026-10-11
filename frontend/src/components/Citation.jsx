@@ -1,38 +1,47 @@
-function Citation({ data }) {
+function Citation({ data, showEvidence = true }) {
+    if (!data) {
+        return null;
+    }
+
     const hasValue = (value) =>
         value !== null &&
         value !== undefined &&
         String(value).trim() !== "";
 
     return (
-        <div className="citation-card">
+        <article className="citation-card">
             {hasValue(data.source) && (
                 <h4 className="citation-title">
-                    📄 {data.source}
+                    {data.source}
                 </h4>
             )}
 
             {(hasValue(data.page) || hasValue(data.section)) && (
-                <div className="citation-details">
+                <dl className="citation-details">
                     {hasValue(data.page) && (
-                        <p>
-                            <b>Page:</b> {data.page}
-                        </p>
+                        <div className="citation-detail">
+                            <dt>Page</dt>
+                            <dd>{data.page}</dd>
+                        </div>
                     )}
                     {hasValue(data.section) && (
-                        <p>
-                            <b>Section:</b> {data.section}
-                        </p>
+                        <div className="citation-detail">
+                            <dt>Section</dt>
+                            <dd>{data.section}</dd>
+                        </div>
                     )}
-                </div>
+                </dl>
             )}
 
-            {hasValue(data.quote) && (
-                <blockquote className="citation-quote">
-                    {data.quote}
-                </blockquote>
+            {showEvidence && hasValue(data.quote) && (
+                <details className="citation-evidence" open>
+                    <summary>Evidence snippet</summary>
+                    <blockquote className="citation-quote">
+                        {data.quote}
+                    </blockquote>
+                </details>
             )}
-        </div>
+        </article>
     );
 }
 

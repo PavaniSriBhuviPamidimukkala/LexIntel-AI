@@ -8,6 +8,44 @@ const CONNECTION_ERROR_MESSAGE =
 const REQUEST_ERROR_MESSAGE =
     "We couldn't get an answer right now. Please try again.";
 
+const ANSWER_SECTIONS = [
+    ["legalAnswer", "Legal Answer"],
+    ["explanation", "Explanation"],
+    ["keyLegalPoints", "Key Legal Points"],
+    ["sources", "Sources"],
+    ["evidence", "Evidence"],
+];
+
+function parseAnswerSections(answer) {
+    const sections = {};
+    const sectionPattern =
+        /^\s*(?:#{1,6}\s*)?(Legal Answer|Explanation|Key Legal Points|Sources|Evidence):?\s*$/i;
+    let currentSection = null;
+
+    for (const line of answer.split("\n")) {
+        const heading = line.match(sectionPattern);
+        if (heading) {
+            currentSection = ANSWER_SECTIONS.find(
+                ([, title]) => title.toLowerCase() === heading[1].toLowerCase()
+            )?.[0];
+            sections[currentSection] = [];
+        } else if (currentSection) {
+            sections[currentSection].push(line);
+        }
+    }
+
+    if (Object.keys(sections).length === 0) {
+        return null;
+    }
+
+    return Object.fromEntries(
+        Object.entries(sections).map(([key, lines]) => [
+            key,
+            lines.join("\n").trim(),
+        ])
+    );
+}
+
 function getChatErrorMessage(error) {
     if (error instanceof TypeError) {
         return CONNECTION_ERROR_MESSAGE;
@@ -19,6 +57,7 @@ function getChatErrorMessage(error) {
 function Chat() {
     const [question, setQuestion] = useState("");
     const [answer, setAnswer] = useState("");
+    const [askedQuestion, setAskedQuestion] = useState("");
     const [citations, setCitations] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
@@ -45,6 +84,7 @@ function Chat() {
 
         setErrorMessage("");
         setSuccessMessage("");
+        setAskedQuestion(question.trim());
 
         try {
             setIsLoading(true);
@@ -61,21 +101,43 @@ function Chat() {
         }
     }
 
+    const answerSections = answer ? parseAnswerSections(answer) : null;
+    const visibleAnswer = answerSections
+        ? [
+            ["legalAnswer", "Legal Answer"],
+            ["explanation", "Explanation"],
+            ["keyLegalPoints", "Key Legal Points"],
+        ].filter(([key]) => answerSections[key])
+        : null;
+    const evidenceCitations = citations.filter(
+        (citation) =>
+            typeof citation.quote === "string" && citation.quote.trim()
+    );
+
     return (
-        <div>
-            <h2>⚖️ Ask LexIntel AI</h2>
-            <p>Ask questions based on your uploaded legal documents.</p>
+        <div className="chat-workspace">
+            <div className="chat-heading">
+                <p className="eyebrow">Document-grounded research</p>
+                <h2>Ask a legal question</h2>
+                <p>
+                    Answers are based on evidence retrieved from your uploaded
+                    documents.
+                </p>
+            </div>
 
             <textarea
+                aria-label="Legal question"
                 rows="5"
-                placeholder="Example: What is a contract of sale?"
+                placeholder="Example: What remedies are available for breach of contract?"
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
             />
 
-            <br />
-
-            <button onClick={handleAsk} disabled={isLoading}>
+            <button
+                className="ask-button"
+                onClick={handleAsk}
+                disabled={isLoading}
+            >
                 {isLoading ? (
                     <>
                         <span className="loading-spinner" aria-hidden="true" />
@@ -105,20 +167,112 @@ function Chat() {
             )}
 
             {answer && (
-                <div className="answer-box" ref={answerRef}>
-                    <h3>🤖 LexIntel Answer</h3>
-                    <ReactMarkdown>{answer}</ReactMarkdown>
+                <section
+                    className="conversation-result"
+                    ref={answerRef}
+                    aria-label="Latest answer"
+                >
+                    <article className="question-message">
+                        <span className="message-label">Your question</span>
+                        <p>{askedQuestion}</p>
+                    </article>
 
-                    {citations.length > 0 && (
-                        <>
-                            <h3>📚 Sources</h3>
-                            {citations.map((citation, index) => (
-                                <Citation key={index} data={citation} />
-                            ))}
-                        </>
+                    <article className="answer-message">
+                        <div className="answer-message-heading">
+                            <span className="assistant-mark" aria-hidden="true">
+                                LI
+                            </span>
+                            <div>
+                                <span className="message-label">LexIntel AI</span>
+                                <span className="grounding-note">
+                                    Grounded in retrieved evidence
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="answer-content">
+                            {visibleAnswer?.length > 0 ? (
+                                visibleAnswer.map(([key, title]) => (
+                                    <section
+                                        className="answer-section"
+                                        key={key}
+                                    >
+                                        <h3>{title}</h3>
+                                        <ReactMarkdown>
+                                            {answerSections[key]}
+                                        </ReactMarkdown>
+                                    </section>
+                                ))
+                            ) : (
+                                <ReactMarkdown>{answer}</ReactMarkdown>
+                            )}
+                        </div>
+
+                        {citations.length > 0 && (
+                            <div className="citation-results">
+                                <section className="source-section">
+                                    <div className="result-section-heading">
+                                        <h3>Sources</h3>
+                                        <span>
+                                            {citations.length}{" "}
+                                            {citations.length === 1
+                                                ? "source"
+                                                : "sources"}
+                                        </span>
+                                    </div>
+                                    <div className="citation-list">
+                                        {citations.map((citation, index) => (
+                                            <Citation
+                                                key={
+                                                    citation.chunk_id ??
+                                                    `${citation.source}-${index}`
+                                                }
+                                                data={citation}
+                                                showEvidence={false}
+                                            />
+                                        ))}
+                                    </div>
+                                </section>
+
+                                {evidenceCitations.length > 0 && (
+                                    <section className="evidence-section">
+                                        <div className="result-section-heading">
+                                            <h3>Evidence</h3>
+                                        </div>
+                                        <div className="evidence-list">
+                                            {evidenceCitations.map(
+                                                (citation, index) => (
+                                                    <article
+                                                        className="evidence-card"
+                                                        key={
+                                                            citation.chunk_id ??
+                                                            `${citation.source}-evidence-${index}`
+                                                        }
+                                                    >
+                                                        <p className="evidence-source">
+                                                            {citation.source}
+                                                            {citation.section &&
+                                                                ` · ${citation.section}`}
+                                                            {citation.page !==
+                                                                null &&
+                                                                citation.page !==
+                                                                    undefined &&
+                                                                ` · Page ${citation.page}`}
+                                                        </p>
+                                                        <blockquote className="citation-quote">
+                                                            {citation.quote}
+                                                        </blockquote>
+                                                    </article>
+                                                )
+                                            )}
+                                        </div>
+                                    </section>
+                                )}
+                            </div>
+                        )}
+                    </article>
+                </section>
                     )}
-                </div>
-            )}
         </div>
     );
 }

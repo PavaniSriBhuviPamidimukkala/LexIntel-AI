@@ -9,7 +9,7 @@ class OllamaProvider(LLMProvider):
     def generate(self, prompt: str) -> str:
 
         response = requests.post(
-            "http://localhost:11434/api/generate",
+            f"{settings.OLLAMA_BASE_URL.rstrip('/')}/api/generate",
             json={
                 "model": settings.OLLAMA_MODEL,
                 "prompt": prompt,

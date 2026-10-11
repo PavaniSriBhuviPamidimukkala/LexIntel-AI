@@ -1,13 +1,15 @@
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 
 from pypdf import PdfReader
+from pypdf.errors import PdfReadError
 
 import os
 import re
 
 
 from app.database import SessionLocal
+from app.core.config import settings
 
 from app.models.legal_document import LegalDocument
 from app.models.document_chunk import DocumentChunk
@@ -26,6 +28,7 @@ from app.embeddings.generator import generate_embedding
 from app.retrieval.search import search_documents
 
 from app.utils.chunker import split_pages
+from app.evaluation.performance import timed_function, timed_stage
 
 
 
@@ -45,6 +48,41 @@ def get_db():
 
     finally:
         db.close()
+
+
+def validate_pdf_upload(file: UploadFile) -> None:
+    filename = file.filename or ""
+    if not filename.lower().endswith(".pdf"):
+        raise HTTPException(
+            status_code=400,
+            detail="Only PDF documents can be uploaded.",
+        )
+
+    file.file.seek(0, os.SEEK_END)
+    file_size = file.file.tell()
+    file.file.seek(0)
+
+    if file_size == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="The uploaded PDF is empty.",
+        )
+
+    if file_size > settings.MAX_UPLOAD_SIZE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=(
+                "The PDF exceeds the maximum upload size of "
+                f"{settings.MAX_UPLOAD_SIZE_BYTES // (1024 * 1024)} MB."
+            ),
+        )
+
+    if b"%PDF-" not in file.file.read(1024):
+        raise HTTPException(
+            status_code=400,
+            detail="The uploaded file is not a valid PDF.",
+        )
+    file.file.seek(0)
 
 
 
@@ -294,6 +332,7 @@ def get_documents(
     "/upload",
     response_model=DocumentResponse
 )
+@timed_function("pdf_upload_time")
 def upload_document(
 
     file:UploadFile=File(...),
@@ -302,31 +341,27 @@ def upload_document(
 
 ):
 
+    filename = file.filename or ""
+    validate_pdf_upload(file)
 
-    reader=PdfReader(file.file)
-
-
-
-    title=os.path.splitext(
-        file.filename
-    )[0]
-
-
-
-    pages=[]
-
-
-
-    for page in reader.pages:
-
-
-        text=(
-            page.extract_text()
-            or ""
-        )
-
-
-        pages.append(text)
+    with timed_stage("pdf_parsing_time"):
+        try:
+            reader = PdfReader(file.file)
+            if reader.is_encrypted:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Encrypted PDFs are not supported.",
+                )
+            title = os.path.splitext(filename)[0]
+            pages = [
+                page.extract_text() or ""
+                for page in reader.pages
+            ]
+        except (PdfReadError, ValueError) as exc:
+            raise HTTPException(
+                status_code=400,
+                detail="The uploaded PDF could not be read.",
+            ) from exc
 
 
 
@@ -343,9 +378,8 @@ def upload_document(
 
 
 
-    page_chunks=split_pages(
-        pages
-    )
+    with timed_stage("chunking_time"):
+        page_chunks = split_pages(pages)
 
 
 
@@ -363,96 +397,47 @@ def upload_document(
 
 
 
-    for item in page_chunks:
+    with timed_stage("embedding_generation_time"):
+        for item in page_chunks:
 
 
-        content=item["content"]
+            content = item["content"]
 
 
-        if not content.strip():
+            if not content.strip():
 
-            continue
-
-
+                continue
 
 
+            chapter = item.get("chapter")
+            if chapter:
+                current_chapter = chapter
 
-        chapter = item.get("chapter")
-        if chapter:
-            current_chapter = chapter
+            section = item.get("section")
+            if section:
+                current_section = section
+                current_title = item.get("section_title")
 
-        section = item.get("section")
-        if section:
-            current_section = section
-            current_title = item.get("section_title")
-
-        embedding=generate_embedding(
-            content
-        )
+            embedding = generate_embedding(content)
 
 
+            metadata = {
+                "act_name": act_name,
+                "document_type": "Uploaded PDF",
+                "page_number": item["page_number"],
+                "chapter": current_chapter,
+                "section": current_section,
+                "section_title": current_title,
+            }
 
-
-
-        metadata={
-
-
-            "act_name":
-                act_name,
-
-
-            "document_type":
-                "Uploaded PDF",
-
-
-            "page_number":
-                item["page_number"],
-
-
-
-            "chapter":
-                current_chapter,
-
-
-
-            "section":
-                current_section,
-
-
-
-            "section_title":
-                current_title
-
-        }
-
-
-
-
-
-        chunk=DocumentChunk(
-
-            content=content,
-
-
-            page_number=
-                item["page_number"],
-
-
-
-            section=current_section,
-
-
-
-            metadata_json=metadata,
-
-
-
-            embedding=embedding
-
-        )
-
-
-        chunks.append(chunk)
+            chunk = DocumentChunk(
+                content=content,
+                page_number=item["page_number"],
+                section=current_section,
+                metadata_json=metadata,
+                embedding=embedding,
+            )
+            chunks.append(chunk)
 
 
 

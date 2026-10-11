@@ -9,6 +9,8 @@ from app.rag.context import build_context
 from app.rag.prompts import build_prompt
 from app.rag.generator import generate_answer
 from app.citations.engine import generate_citations
+from app.citations.formatter import format_answer_with_citations
+from app.evaluation.performance import timed_stage
 
 logger = logging.getLogger(__name__)
 
@@ -195,14 +197,15 @@ def rag_pipeline(
 ):
     """Retrieve legal passages, generate an answer, and attach citations."""
 
-    retrieved = search_documents(question, db, limit)
+    with timed_stage("retrieval_latency"):
+        retrieved = search_documents(question, db, limit)
     results = filter_relevant_results(question, retrieved)
 
     if not results:
         return {
             "answer": (
-                "No sufficiently relevant passages were found in the "
-                "uploaded documents. Try rephrasing your question."
+                "The requested information is not available in the "
+                "uploaded documents."
             ),
             "citations": [],
         }
@@ -213,12 +216,13 @@ def rag_pipeline(
     prompt = build_prompt(question, context)
 
     try:
-        answer = generate_answer(prompt)
-    except Exception:
-        logger.exception("AI answer generation failed")
-        answer = build_fallback_answer(results)
+        with timed_stage("llm_generation_latency"):
+            answer = generate_answer(prompt)
+    except Exception as e:
+        logger.exception("AI answer generation failed: %s", e)
+        answer = f"Gemini Error: {str(e)}"
 
     return {
-        "answer": answer,
+        "answer": format_answer_with_citations(answer, citations),
         "citations": citations,
     }

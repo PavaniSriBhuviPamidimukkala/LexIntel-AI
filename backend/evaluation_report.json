@@ -1,0 +1,480 @@
+{
+  "total_questions": 5,
+  "k": 5,
+  "average_hit_at_k": 0.0,
+  "average_section_hit": 0.0,
+  "average_precision": 0.0,
+  "average_recall": 0.0,
+  "average_mrr": 0.0,
+  "average_ndcg": 0.0,
+  "metrics": {
+    "precision_at_k": 0.0,
+    "recall_at_k": 0.0,
+    "mrr": 0.0,
+    "ndcg_at_k": 0.0,
+    "citation_accuracy": 0.0,
+    "source_coverage": null,
+    "unsupported_claim_count": 2.8,
+    "hallucination_rate": 0.85
+  },
+  "performance": {
+    "pdf_upload_time": {
+      "samples": 0,
+      "average": null,
+      "median": null,
+      "minimum": null,
+      "maximum": null,
+      "standard_deviation": null
+    },
+    "pdf_parsing_time": {
+      "samples": 0,
+      "average": null,
+      "median": null,
+      "minimum": null,
+      "maximum": null,
+      "standard_deviation": null
+    },
+    "chunking_time": {
+      "samples": 0,
+      "average": null,
+      "median": null,
+      "minimum": null,
+      "maximum": null,
+      "standard_deviation": null
+    },
+    "embedding_generation_time": {
+      "samples": 0,
+      "average": null,
+      "median": null,
+      "minimum": null,
+      "maximum": null,
+      "standard_deviation": null
+    },
+    "retrieval_latency": {
+      "samples": 5,
+      "average": 0.5561651967998842,
+      "median": 0.048883683999520144,
+      "minimum": 0.043225450000136334,
+      "maximum": 2.3825761009993585,
+      "standard_deviation": 1.0251740861484198
+    },
+    "llm_generation_latency": {
+      "samples": 2,
+      "average": 3.1746405509998112,
+      "median": 3.1746405509998112,
+      "minimum": 0.7348242849993767,
+      "maximum": 5.614456817000246,
+      "standard_deviation": 3.450421253076297
+    },
+    "end_to_end_response_time": {
+      "samples": 5,
+      "average": 1.8311242123996636,
+      "median": 0.8033246349996261,
+      "minimum": 0.046481790999678196,
+      "maximum": 5.663510897999913,
+      "standard_deviation": 2.3292681352702
+    }
+  },
+  "details": [
+    {
+      "question": "What is Section 89 relief?",
+      "expected_document": "Section_89_Overview",
+      "expected_page": null,
+      "expected_section": "SECTION 89",
+      "expected_chunk": null,
+      "expected_evidence": null,
+      "answer": "No sufficiently relevant passages were found in the uploaded documents. Try rephrasing your question.",
+      "retrieved_count": 0,
+      "hit": 0,
+      "section_hit": 0,
+      "precision_at_k": 0.0,
+      "recall_at_k": 0.0,
+      "mrr": 0.0,
+      "ndcg_at_k": 0.0,
+      "citation_accuracy": 0.0,
+      "source_coverage": null,
+      "unsupported_claim_count": 2,
+      "hallucination_rate": 1.0,
+      "answer_sentence_count": 2,
+      "performance": {
+        "pdf_upload_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "pdf_parsing_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "chunking_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "embedding_generation_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "retrieval_latency": {
+          "samples": 1,
+          "average": 2.3825761009993585,
+          "median": 2.3825761009993585,
+          "minimum": 2.3825761009993585,
+          "maximum": 2.3825761009993585,
+          "standard_deviation": null
+        },
+        "llm_generation_latency": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "end_to_end_response_time": {
+          "samples": 1,
+          "average": 2.382591539999339,
+          "median": 2.382591539999339,
+          "minimum": 2.382591539999339,
+          "maximum": 2.382591539999339,
+          "standard_deviation": null
+        }
+      },
+      "precision": 0.0
+    },
+    {
+      "question": "What are the obligations of Data Fiduciary?",
+      "expected_document": "Digital Personal Data Protection Act 2023",
+      "expected_page": null,
+      "expected_section": "Section 8",
+      "expected_chunk": null,
+      "expected_evidence": null,
+      "answer": "No sufficiently relevant passages were found in the uploaded documents. Try rephrasing your question.",
+      "retrieved_count": 0,
+      "hit": 0,
+      "section_hit": 0,
+      "precision_at_k": 0.0,
+      "recall_at_k": 0.0,
+      "mrr": 0.0,
+      "ndcg_at_k": 0.0,
+      "citation_accuracy": 0.0,
+      "source_coverage": null,
+      "unsupported_claim_count": 2,
+      "hallucination_rate": 1.0,
+      "answer_sentence_count": 2,
+      "performance": {
+        "pdf_upload_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "pdf_parsing_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "chunking_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "embedding_generation_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "retrieval_latency": {
+          "samples": 1,
+          "average": 0.25969646900011867,
+          "median": 0.25969646900011867,
+          "minimum": 0.25969646900011867,
+          "maximum": 0.25969646900011867,
+          "standard_deviation": null
+        },
+        "llm_generation_latency": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "end_to_end_response_time": {
+          "samples": 1,
+          "average": 0.259712197999761,
+          "median": 0.259712197999761,
+          "minimum": 0.259712197999761,
+          "maximum": 0.259712197999761,
+          "standard_deviation": null
+        }
+      },
+      "precision": 0.0
+    },
+    {
+      "question": "What is Notice and Action Mechanism?",
+      "expected_document": "Digital Services Act (EU 2022_2065)",
+      "expected_page": null,
+      "expected_section": "Article 16",
+      "expected_chunk": null,
+      "expected_evidence": null,
+      "answer": "No sufficiently relevant passages were found in the uploaded documents. Try rephrasing your question.",
+      "retrieved_count": 0,
+      "hit": 0,
+      "section_hit": 0,
+      "precision_at_k": 0.0,
+      "recall_at_k": 0.0,
+      "mrr": 0.0,
+      "ndcg_at_k": 0.0,
+      "citation_accuracy": 0.0,
+      "source_coverage": null,
+      "unsupported_claim_count": 2,
+      "hallucination_rate": 1.0,
+      "answer_sentence_count": 2,
+      "performance": {
+        "pdf_upload_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "pdf_parsing_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "chunking_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "embedding_generation_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "retrieval_latency": {
+          "samples": 1,
+          "average": 0.04644428000028711,
+          "median": 0.04644428000028711,
+          "minimum": 0.04644428000028711,
+          "maximum": 0.04644428000028711,
+          "standard_deviation": null
+        },
+        "llm_generation_latency": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "end_to_end_response_time": {
+          "samples": 1,
+          "average": 0.046481790999678196,
+          "median": 0.046481790999678196,
+          "minimum": 0.046481790999678196,
+          "maximum": 0.046481790999678196,
+          "standard_deviation": null
+        }
+      },
+      "precision": 0.0
+    },
+    {
+      "question": "What is Section 56 of the Contract Act?",
+      "expected_document": "Section_56_Overview",
+      "expected_page": null,
+      "expected_section": "Section 56",
+      "expected_chunk": null,
+      "expected_evidence": null,
+      "answer": "AI-generated analysis is temporarily unavailable. The following are excerpts from your uploaded legal documents, not an AI-generated legal interpretation.\n\nSource: Sale of Goods Act Brief, page 1\nRelevant excerpt: Sale of Goods Act, 1930 A contract of sale of goods is a contract whereby the seller transfers or agrees to transfer the property in goods to the buyer for a price. An agreement to sell becomes a sale when the time elapses or the conditions are fulfilled subject to which the property in the goods is to be transferred. Sale of Goods Act, 1930 Page...\n\nSource: lexintel_test_upload, page 1\nRelevant excerpt: LexIntel AI Test Legal Document CHAPTER I - SAMPLE CONTRACT RULES Section 12. Compensation for delayed delivery When a supplier fails to deliver goods by the agreed date, the buyer may document the direct loss caused by the delay. This is fictional test content and is not legal advice.",
+      "retrieved_count": 2,
+      "hit": 0,
+      "section_hit": 0,
+      "precision_at_k": 0.0,
+      "recall_at_k": 0.0,
+      "mrr": 0.0,
+      "ndcg_at_k": 0.0,
+      "citation_accuracy": 0.0,
+      "source_coverage": null,
+      "unsupported_claim_count": 2,
+      "hallucination_rate": 0.25,
+      "answer_sentence_count": 8,
+      "performance": {
+        "pdf_upload_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "pdf_parsing_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "chunking_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "embedding_generation_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "retrieval_latency": {
+          "samples": 1,
+          "average": 0.043225450000136334,
+          "median": 0.043225450000136334,
+          "minimum": 0.043225450000136334,
+          "maximum": 0.043225450000136334,
+          "standard_deviation": null
+        },
+        "llm_generation_latency": {
+          "samples": 1,
+          "average": 0.7348242849993767,
+          "median": 0.7348242849993767,
+          "minimum": 0.7348242849993767,
+          "maximum": 0.7348242849993767,
+          "standard_deviation": null
+        },
+        "end_to_end_response_time": {
+          "samples": 1,
+          "average": 0.8033246349996261,
+          "median": 0.8033246349996261,
+          "minimum": 0.8033246349996261,
+          "maximum": 0.8033246349996261,
+          "standard_deviation": null
+        }
+      },
+      "precision": 0.0
+    },
+    {
+      "question": "What is Section 73 of the Contract Act?",
+      "expected_document": "Indian Contract Act 1872",
+      "expected_page": null,
+      "expected_section": "Section 73",
+      "expected_chunk": null,
+      "expected_evidence": null,
+      "answer": "## Legal Definition\nThe provided document does not contain a definition or text for Section 73 of the Contract Act. \n\n## Explanation\nThe provided material pertains exclusively to the *Sale of Goods Act, 1930* and defines a \"contract of sale of goods\" and an \"agreement to sell.\" There is no information or explanation regarding the Contract Act or Section 73 within the provided source.\n\n## Key Legal Points\n* **Information Unavailable:** No legal elements, conditions, or requirements regarding Section 73 of the Contract Act can be determined from the provided documentation.\n* **Provided Content Scope:** The available source only addresses transactions governed by the Sale of Goods Act, 1930 (specifically, the transfer of property in goods for a price).\n\n## Source Reference\n* **Document:** Sale of Goods Act Brief (Page 1)\n\n## Limitations\nThe provided document does not contain the Contract Act or Section 73. To address this query, the relevant text or sections from the Indian Contract Act must be provided.",
+      "retrieved_count": 1,
+      "hit": 0,
+      "section_hit": 0,
+      "precision_at_k": 0.0,
+      "recall_at_k": 0.0,
+      "mrr": 0.0,
+      "ndcg_at_k": 0.0,
+      "citation_accuracy": 0.0,
+      "source_coverage": null,
+      "unsupported_claim_count": 6,
+      "hallucination_rate": 1.0,
+      "answer_sentence_count": 6,
+      "performance": {
+        "pdf_upload_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "pdf_parsing_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "chunking_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "embedding_generation_time": {
+          "samples": 0,
+          "average": null,
+          "median": null,
+          "minimum": null,
+          "maximum": null,
+          "standard_deviation": null
+        },
+        "retrieval_latency": {
+          "samples": 1,
+          "average": 0.048883683999520144,
+          "median": 0.048883683999520144,
+          "minimum": 0.048883683999520144,
+          "maximum": 0.048883683999520144,
+          "standard_deviation": null
+        },
+        "llm_generation_latency": {
+          "samples": 1,
+          "average": 5.614456817000246,
+          "median": 5.614456817000246,
+          "minimum": 5.614456817000246,
+          "maximum": 5.614456817000246,
+          "standard_deviation": null
+        },
+        "end_to_end_response_time": {
+          "samples": 1,
+          "average": 5.663510897999913,
+          "median": 5.663510897999913,
+          "minimum": 5.663510897999913,
+          "maximum": 5.663510897999913,
+          "standard_deviation": null
+        }
+      },
+      "precision": 0.0
+    }
+  ]
+}

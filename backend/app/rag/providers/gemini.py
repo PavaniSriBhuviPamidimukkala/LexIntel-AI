@@ -16,7 +16,11 @@ class GeminiProvider(LLMProvider):
 
         headers = {
             "Content-Type": "application/json",
-            "x-goog-api-key": settings.GEMINI_API_KEY or "",
+            "x-goog-api-key": (
+                settings.GEMINI_API_KEY.get_secret_value()
+                if settings.GEMINI_API_KEY
+                else ""
+            ),
         }
 
         payload = {

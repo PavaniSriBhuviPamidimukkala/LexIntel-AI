@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from app.routes import health, documents
 from app.routes import ask
 from fastapi.middleware.cors import CORSMiddleware
+from app.core.config import settings
+from app.security import TrustedProxyAuthMiddleware
 
 app = FastAPI(
     title="LexIntel AI API",
@@ -10,11 +12,12 @@ app = FastAPI(
 )
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"https://.*-5173\.app\.github\.dev",
+    allow_origins=settings.CORS_ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
+app.add_middleware(TrustedProxyAuthMiddleware)
 
 
 app.include_router(health.router)

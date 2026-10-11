@@ -1,0 +1,14 @@
+record_type,total_questions,question,expected_document,expected_page,expected_section,expected_chunk,expected_evidence,retrieved_count,hit,section_hit,precision_at_k,recall_at_k,mrr,ndcg_at_k,citation_accuracy,source_coverage,unsupported_claim_count,answer_sentence_count,hallucination_rate,performance_stage,performance_samples,average_seconds,median_seconds,minimum_seconds,maximum_seconds,standard_deviation_seconds
+summary,5,,,,,,,,,,0.0,0.0,0.0,0.0,0.0,,2.8,,0.85,,,,,,,
+question,,What is Section 89 relief?,Section_89_Overview,,SECTION 89,,,0,0,0,0.0,0.0,0.0,0.0,0.0,,2,2,1.0,,,,,,,
+question,,What are the obligations of Data Fiduciary?,Digital Personal Data Protection Act 2023,,Section 8,,,0,0,0,0.0,0.0,0.0,0.0,0.0,,2,2,1.0,,,,,,,
+question,,What is Notice and Action Mechanism?,Digital Services Act (EU 2022_2065),,Article 16,,,0,0,0,0.0,0.0,0.0,0.0,0.0,,2,2,1.0,,,,,,,
+question,,What is Section 56 of the Contract Act?,Section_56_Overview,,Section 56,,,2,0,0,0.0,0.0,0.0,0.0,0.0,,2,8,0.25,,,,,,,
+question,,What is Section 73 of the Contract Act?,Indian Contract Act 1872,,Section 73,,,1,0,0,0.0,0.0,0.0,0.0,0.0,,6,6,1.0,,,,,,,
+performance,,,,,,,,,,,,,,,,,,,,pdf_upload_time,0,,,,,
+performance,,,,,,,,,,,,,,,,,,,,pdf_parsing_time,0,,,,,
+performance,,,,,,,,,,,,,,,,,,,,chunking_time,0,,,,,
+performance,,,,,,,,,,,,,,,,,,,,embedding_generation_time,0,,,,,
+performance,,,,,,,,,,,,,,,,,,,,retrieval_latency,5,0.5561651967998842,0.048883683999520144,0.043225450000136334,2.3825761009993585,1.0251740861484198
+performance,,,,,,,,,,,,,,,,,,,,llm_generation_latency,2,3.1746405509998112,3.1746405509998112,0.7348242849993767,5.614456817000246,3.450421253076297
+performance,,,,,,,,,,,,,,,,,,,,end_to_end_response_time,5,1.8311242123996636,0.8033246349996261,0.046481790999678196,5.663510897999913,2.3292681352702

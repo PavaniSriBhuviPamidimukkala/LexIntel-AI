@@ -8,6 +8,21 @@ from app.retrieval.semantic import semantic_search
 from app.retrieval.keyword import keyword_search
 from app.retrieval.hybrid import hybrid_rank
 
+LEGAL_REFERENCE_PATTERN = re.compile(
+    r"\b(section|article)\s+(\d+[a-z]?)\b(?![a-z0-9])",
+    re.IGNORECASE,
+)
+ACT_NAME_PATTERN = re.compile(
+    r"\b((?:[a-z0-9&.'()-]+\s+){0,6}"
+    r"(?:act|code|regulation))\b",
+    re.IGNORECASE,
+)
+REFERENCE_STOPWORDS = {
+    "a", "an", "and", "are", "does", "explain", "for", "in", "is",
+    "of", "on", "the", "to", "what", "which",
+    "article", "section",
+}
+
 
 def is_retrievable_chunk(chunk):
     """Exclude known boilerplate and unusably short chunks."""
@@ -32,28 +47,142 @@ def get_requested_section(query):
     return match.group(1).lower() if match else None
 
 
-def chunk_matches_section(chunk, target):
-    """Check section metadata or text for an exact section reference."""
-    if not target:
+def get_requested_reference(query):
+    """Extract an explicit section or article label and number."""
+    match = LEGAL_REFERENCE_PATTERN.search(query)
+    if not match:
+        return None
+    return match.group(1).casefold(), match.group(2).casefold()
+
+
+def _normalize_words(value):
+    return " ".join(re.findall(r"[a-z0-9]+", (value or "").casefold()))
+
+
+def _reference_matches(value, reference):
+    if not value or not reference:
         return False
 
-    section = str(getattr(chunk, "section", "") or "")
-    section_match = re.search(
-        r"\bsection\s*(\d+[a-z]?)\b",
-        section,
+    label, number = reference
+    match = re.search(
+        r"\b(section|article)\s*(\d+[a-z]?)\b(?![a-z0-9])",
+        str(value),
         re.IGNORECASE,
     )
-
-    if section_match and section_match.group(1).lower() == target:
-        return True
-
-    content = chunk.content or ""
-    content_match = re.search(
-        rf"\bsection\s+{re.escape(target)}\b(?![a-z0-9])",
-        content,
-        re.IGNORECASE,
+    return bool(
+        match
+        and match.group(1).casefold() == label
+        and match.group(2).casefold() == number
     )
-    return bool(content_match)
+
+
+def chunk_matches_reference(chunk, reference):
+    """Check section metadata and text for an exact legal reference."""
+    return _reference_matches(
+        getattr(chunk, "section", None),
+        reference,
+    ) or _reference_matches(
+        getattr(chunk, "content", None),
+        reference,
+    )
+
+
+def chunk_matches_section(chunk, target):
+    """Compatibility helper for exact section matching."""
+    return chunk_matches_reference(chunk, ("section", target))
+
+
+def _act_phrases(query):
+    phrases = []
+    for match in ACT_NAME_PATTERN.finditer(query):
+        words = [
+            word
+            for word in _normalize_words(match.group(1)).split()
+            if word not in REFERENCE_STOPWORDS and not word.isdigit()
+        ]
+        if words and words[-1] in {"act", "code", "regulation"}:
+            phrases.append(words)
+    return phrases
+
+
+def _title_acronym(title):
+    words = [
+        word for word in _normalize_words(title).split()
+        if word not in REFERENCE_STOPWORDS
+    ]
+    return "".join(word[0] for word in words)
+
+
+def _act_matches_chunk(chunk, query, act_phrases):
+    document = getattr(chunk, "document", None)
+    title = getattr(document, "title", "") if document else ""
+    metadata = getattr(chunk, "metadata_json", None) or {}
+    act_name = metadata.get("act_name", "")
+    normalized_title = _normalize_words(title)
+    normalized_act_name = _normalize_words(act_name)
+
+    for phrase in act_phrases:
+        normalized_phrase = " ".join(phrase)
+        if (
+            normalized_phrase in normalized_title
+            or normalized_phrase in normalized_act_name
+        ):
+            return True
+
+    # Support common legal-document acronyms such as DSA and DPDP(A).
+    query_tokens = set(_normalize_words(query).split())
+    title_acronym = _title_acronym(title)
+    act_acronym = _title_acronym(act_name)
+    return any(
+        len(token) >= 2
+        and (
+            title_acronym.startswith(token)
+            or act_acronym.startswith(token)
+        )
+        for token in query_tokens
+    )
+
+
+def metadata_candidate_chunks(chunks, query):
+    """
+    Narrow chunks by explicit section/article and act-name metadata.
+
+    Exact legal-reference matches take precedence. When both reference and act
+    name are supplied, their intersection is preferred when available; if it
+    is empty, preserve the exact reference candidates rather than dropping
+    potentially relevant passages.
+    """
+    reference = get_requested_reference(query)
+    act_phrases = _act_phrases(query)
+
+    reference_matches = (
+        [
+            chunk for chunk in chunks
+            if chunk_matches_reference(chunk, reference)
+        ]
+        if reference
+        else []
+    )
+    act_matches = (
+        [
+            chunk for chunk in chunks
+            if _act_matches_chunk(chunk, query, act_phrases)
+        ]
+        if act_phrases or re.search(r"\b[A-Z]{2,}\b", query)
+        else []
+    )
+
+    if reference_matches and act_matches:
+        combined_matches = [
+            chunk for chunk in reference_matches
+            if chunk in act_matches
+        ]
+        return combined_matches or reference_matches
+    if reference_matches:
+        return reference_matches
+    if act_matches:
+        return act_matches
+    return chunks
 
 
 def search_documents(
@@ -71,21 +200,18 @@ def search_documents(
     if not chunks:
         return []
 
-    semantic_scores = semantic_search(query, db)
+    chunks = metadata_candidate_chunks(chunks, query)
+    if not chunks:
+        return []
+
+    # Restrict vector distance computation to metadata-matched candidates.
+    candidate_ids = [chunk.id for chunk in chunks]
+    semantic_scores = semantic_search(
+        query,
+        db,
+        candidate_ids=candidate_ids,
+    )
     keyword_scores = keyword_search(query, chunks)
-
-    target_section = get_requested_section(query)
-
-    if target_section:
-        exact_matches = [
-            chunk for chunk in chunks
-            if chunk_matches_section(chunk, target_section)
-        ]
-
-        # Prefer exact-section chunks when available.
-        # Otherwise preserve the normal hybrid-search fallback.
-        if exact_matches:
-            chunks = exact_matches
 
     return hybrid_rank(
         chunks,

@@ -1,6 +1,7 @@
 import unittest
 from types import SimpleNamespace
 
+from app.citations.engine import generate_citations
 from app.retrieval.hybrid import hybrid_rank
 
 
@@ -8,9 +9,11 @@ def make_chunk(chunk_id, document_id, title, section=None, content=""):
     return SimpleNamespace(
         id=chunk_id,
         document_id=document_id,
+        page_number=None,
         section=section,
         content=content,
-        document=SimpleNamespace(title=title),
+        metadata_json={},
+        document=SimpleNamespace(title=title, category=None),
     )
 
 
@@ -42,12 +45,12 @@ class TestHybridRank(unittest.TestCase):
 
     def test_repeated_chunks_are_limited_per_document(self):
         chunks = [
-            make_chunk(1, 10, "First Act"),
-            make_chunk(2, 10, "First Act"),
-            make_chunk(3, 10, "First Act"),
-            make_chunk(4, 20, "Second Act"),
+            make_chunk(1, 10, "First Act", content="First passage."),
+            make_chunk(2, 10, "First Act", content="Second passage."),
+            make_chunk(3, 10, "First Act", content="Third passage."),
+            make_chunk(4, 20, "Second Act", content="Fourth passage."),
         ]
-        scores = {1: 0.9, 2: 0.8, 3: 0.7, 4: 0.6}
+        scores = {1: 0.9, 2: 0.8, 3: 0.7, 4: 0.7}
 
         results = hybrid_rank(
             chunks,
@@ -61,6 +64,135 @@ class TestHybridRank(unittest.TestCase):
         self.assertEqual(len(results), 3)
         self.assertEqual(
             sum(chunk.document_id == 10 for chunk, _ in results), 2
+        )
+
+    def test_duplicate_content_keeps_highest_scoring_chunk(self):
+        lower_scoring_copy = make_chunk(
+            1, 10, "First Act", content="  Identical   legal content. "
+        )
+        higher_scoring_copy = make_chunk(
+            2, 20, "Second Act", content="Identical legal content."
+        )
+        unique_chunk = make_chunk(
+            3, 30, "Third Act", content="A different legal passage."
+        )
+
+        results = hybrid_rank(
+            [lower_scoring_copy, higher_scoring_copy, unique_chunk],
+            {1: 0.8, 2: 0.9, 3: 0.85},
+            {},
+            "Explain the rule",
+            limit=2,
+        )
+
+        self.assertEqual(
+            [chunk.id for chunk, _ in results],
+            [2, 3],
+        )
+        citations = generate_citations(results)
+        self.assertEqual(
+            [citation["quote"] for citation in citations],
+            ["Identical legal content.", "A different legal passage."],
+        )
+
+    def test_duplicate_content_does_not_consume_limit(self):
+        chunks = [
+            make_chunk(1, 10, "First Act", content="Repeated passage."),
+            make_chunk(2, 20, "Second Act", content="Repeated   passage."),
+            make_chunk(3, 30, "Third Act", content="Unique passage two."),
+            make_chunk(4, 40, "Fourth Act", content="Unique passage three."),
+        ]
+
+        results = hybrid_rank(
+            chunks,
+            {1: 0.95, 2: 0.9, 3: 0.85, 4: 0.8},
+            {},
+            "Explain the rule",
+            limit=3,
+        )
+
+        self.assertEqual(
+            [chunk.id for chunk, _ in results],
+            [1, 3, 4],
+        )
+
+    def test_prefers_different_sections_within_similar_score_range(self):
+        chunks = [
+            make_chunk(
+                1, 10, "Contract Act", "SECTION 10",
+                "alpha bravo charlie delta echo foxtrot golf hotel india",
+            ),
+            make_chunk(
+                2, 10, "Contract Act", "SECTION 10",
+                "juliet kilo lima mike november oscar papa quebec romeo",
+            ),
+            make_chunk(
+                3, 10, "Contract Act", "SECTION 11",
+                "sierra tango uniform victor whiskey xray yankee zulu alpha",
+            ),
+        ]
+
+        results = hybrid_rank(
+            chunks,
+            {1: 0.95, 2: 0.93, 3: 0.88},
+            {},
+            "Explain the rule",
+            limit=2,
+            max_per_document=3,
+        )
+
+        self.assertEqual([chunk.id for chunk, _ in results], [1, 3])
+        self.assertEqual(
+            {chunk.section for chunk, _ in results},
+            {"SECTION 10", "SECTION 11"},
+        )
+
+    def test_skips_substantially_overlapping_chunks(self):
+        chunks = [
+            make_chunk(
+                1, 10, "Contract Act", "SECTION 10",
+                "alpha bravo charlie delta echo foxtrot golf hotel india juliet",
+            ),
+            make_chunk(
+                2, 20, "Contract Act", "SECTION 11",
+                "alpha bravo charlie delta echo foxtrot golf hotel kilo lima",
+            ),
+            make_chunk(
+                3, 30, "Contract Act", "SECTION 12",
+                "november oscar papa quebec romeo sierra tango uniform victor",
+            ),
+        ]
+
+        results = hybrid_rank(
+            chunks,
+            {1: 0.95, 2: 0.9, 3: 0.85},
+            {},
+            "Explain the rule",
+            limit=2,
+        )
+
+        self.assertEqual([chunk.id for chunk, _ in results], [1, 3])
+
+    def test_document_cap_does_not_allow_lower_scoring_duplicate(self):
+        chunks = [
+            make_chunk(1, 10, "First Act", content="First unique passage."),
+            make_chunk(2, 10, "First Act", content="Repeated passage."),
+            make_chunk(3, 20, "Second Act", content="Repeated passage."),
+            make_chunk(4, 30, "Third Act", content="Another unique passage."),
+        ]
+
+        results = hybrid_rank(
+            chunks,
+            {1: 0.95, 2: 0.9, 3: 0.85, 4: 0.8},
+            {},
+            "Explain the rule",
+            limit=3,
+            max_per_document=1,
+        )
+
+        self.assertEqual(
+            [chunk.id for chunk, _ in results],
+            [1, 4],
         )
 
     def test_topic_relevant_article_outranks_generic_notice_chunk(self):

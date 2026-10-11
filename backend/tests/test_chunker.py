@@ -64,7 +64,7 @@ class TestLegalMetadata(unittest.TestCase):
         )
         metadata = extract_legal_metadata(text)
 
-        self.assertEqual(metadata["section"], "Section 73")
+        self.assertEqual(metadata["section"], "SECTION 73")
 
     def test_consecutive_sections_get_separate_chunks(self):
         pages = [

@@ -6,7 +6,7 @@ def build_context(results):
 
     context_parts = []
 
-    for index, (chunk, score) in enumerate(results):
+    for index, (chunk, _) in enumerate(results):
 
         document = chunk.document
 
@@ -17,14 +17,11 @@ Source {index + 1}
 Document:
 {document.title}
 
-Category:
-{document.category}
-
 Page:
 {chunk.page_number}
 
-Relevance Score:
-{score}
+Section:
+{getattr(chunk, "section", None) or "Not available"}
 
 Content:
 {chunk.content[:2000]}
