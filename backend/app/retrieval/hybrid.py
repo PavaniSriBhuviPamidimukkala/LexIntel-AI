@@ -88,6 +88,15 @@ def hybrid_rank(
 
     results.sort(key=lambda item: item[1], reverse=True)
 
+        # Remove weakly relevant legal passages
+    MIN_SCORE = 0.30
+
+    results = [
+        (chunk, score)
+        for chunk, score in results
+        if score >= MIN_SCORE
+    ]
+
     final_results = []
     document_counts = defaultdict(int)
 

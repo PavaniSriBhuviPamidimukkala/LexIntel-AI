@@ -1,4 +1,6 @@
-const API_URL = "https://cuddly-space-pancake-69pw9v4r74wpc9j9-8000.app.github.dev";
+const API_URL =
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:8000";
 
 
 // Upload PDF
