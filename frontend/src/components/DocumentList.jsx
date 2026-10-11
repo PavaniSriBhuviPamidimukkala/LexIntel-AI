@@ -19,6 +19,7 @@ function DocumentList({ uploadedDocument }) {
     const [documents, setDocuments] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
+    const [refreshIndex, setRefreshIndex] = useState(0);
 
     useEffect(() => {
         let isMounted = true;
@@ -50,7 +51,7 @@ function DocumentList({ uploadedDocument }) {
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [refreshIndex]);
 
     const displayedDocuments = uploadedDocument
         ? [
@@ -66,32 +67,42 @@ function DocumentList({ uploadedDocument }) {
         <section className="document-list" aria-labelledby="documents-heading">
             <div className="section-heading">
                 <div>
-                    <p className="eyebrow">Your library</p>
-                    <h2 id="documents-heading">Uploaded documents</h2>
+                    <p className="eyebrow">Your research library</p>
+                    <h2 id="documents-heading">Documents</h2>
                 </div>
-                {displayedDocuments.length > 0 && (
-                    <span className="document-count">
-                        {displayedDocuments.length}{" "}
-                        {displayedDocuments.length === 1 ? "document" : "documents"}
-                    </span>
-                )}
+                <span className="document-count" aria-label={`${displayedDocuments.length} documents`}>
+                    {displayedDocuments.length}
+                </span>
             </div>
 
             {isLoading && (
                 <p className="status-message status-loading" role="status">
+                    <span className="loading-spinner loading-spinner-dark" aria-hidden="true" />
                     Loading your document library...
                 </p>
             )}
 
             {visibleError && (
-                <p className="status-message status-error" role="alert">
-                    {visibleError}
-                </p>
+                <div className="library-error" role="alert">
+                    <p className="status-message status-error">{visibleError}</p>
+                    <button
+                        className="text-button"
+                        onClick={() => {
+                            setIsLoading(true);
+                            setRefreshIndex((index) => index + 1);
+                        }}
+                        disabled={isLoading}
+                    >
+                        Try again
+                    </button>
+                </div>
             )}
 
             {!isLoading && !visibleError && displayedDocuments.length === 0 && (
                 <p className="empty-state">
-                    Uploaded legal documents will appear here.
+                    <span className="empty-state-icon" aria-hidden="true">▤</span>
+                    <span>Your library is ready.</span>
+                    <span>Uploaded legal documents will appear here.</span>
                 </p>
             )}
 
@@ -109,7 +120,9 @@ function DocumentList({ uploadedDocument }) {
                                     <h3 title={document.title}>{document.title}</h3>
                                     <div className="document-metadata">
                                         {document.category && (
-                                            <span>{document.category}</span>
+                                            <span className="metadata-tag">
+                                                {document.category}
+                                            </span>
                                         )}
                                         {uploadDate && (
                                             <span>Uploaded {uploadDate}</span>

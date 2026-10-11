@@ -84,13 +84,14 @@ function Chat() {
 
         setErrorMessage("");
         setSuccessMessage("");
-        setAskedQuestion(question.trim());
+        const submittedQuestion = question.trim();
 
         try {
             setIsLoading(true);
 
             const result = await askQuestion(question);
             setAnswer(result.answer);
+            setAskedQuestion(submittedQuestion);
             setCitations(result.citations || []);
             scrollToAnswer.current = true;
             setSuccessMessage("Your answer is ready.");
@@ -117,36 +118,60 @@ function Chat() {
     return (
         <div className="chat-workspace">
             <div className="chat-heading">
-                <p className="eyebrow">Document-grounded research</p>
-                <h2>Ask a legal question</h2>
+                <p className="eyebrow">Your legal research assistant</p>
+                <h2>Ask LexIntel AI</h2>
                 <p>
-                    Answers are based on evidence retrieved from your uploaded
-                    documents.
+                    Ask a question about your documents and receive a
+                    structured, evidence-grounded response.
                 </p>
             </div>
 
-            <textarea
-                aria-label="Legal question"
-                rows="5"
-                placeholder="Example: What remedies are available for breach of contract?"
-                value={question}
-                onChange={(event) => setQuestion(event.target.value)}
-            />
-
-            <button
-                className="ask-button"
-                onClick={handleAsk}
-                disabled={isLoading}
+            <form
+                className="question-form"
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    handleAsk();
+                }}
             >
-                {isLoading ? (
-                    <>
-                        <span className="loading-spinner" aria-hidden="true" />
-                        Analyzing...
-                    </>
-                ) : (
-                    "Ask Legal AI"
-                )}
-            </button>
+                <label className="input-label" htmlFor="legal-question">
+                    Your question
+                </label>
+                <textarea
+                    id="legal-question"
+                    aria-describedby="question-hint"
+                    rows="5"
+                    maxLength={2000}
+                    placeholder="Example: What remedies are available for breach of contract?"
+                    value={question}
+                    onChange={(event) => setQuestion(event.target.value)}
+                />
+                <div className="question-form-footer">
+                    <span id="question-hint" className="input-hint">
+                        Answers are limited to evidence in your uploaded
+                        documents.
+                    </span>
+                    <span className="character-count">
+                        {question.length}/2000
+                    </span>
+                </div>
+                <button
+                    className="ask-button"
+                    type="submit"
+                    disabled={isLoading}
+                >
+                    {isLoading ? (
+                        <>
+                            <span className="loading-spinner" aria-hidden="true" />
+                            Reviewing documents...
+                        </>
+                    ) : (
+                        <>
+                            Ask question
+                            <span aria-hidden="true">→</span>
+                        </>
+                    )}
+                </button>
+            </form>
 
             {errorMessage && (
                 <p className="status-message status-error" role="alert">
@@ -161,9 +186,13 @@ function Chat() {
             )}
 
             {isLoading && (
-                <p className="status-message status-loading" role="status">
-                    Please wait while we prepare your answer.
-                </p>
+                <div className="chat-loading" role="status" aria-live="polite">
+                    <span className="loading-spinner loading-spinner-dark" aria-hidden="true" />
+                    <div>
+                        <strong>Reviewing your documents</strong>
+                        <span>Finding relevant passages and preparing a cited answer.</span>
+                    </div>
+                </div>
             )}
 
             {answer && (
@@ -228,6 +257,7 @@ function Chat() {
                                                     `${citation.source}-${index}`
                                                 }
                                                 data={citation}
+                                                index={index + 1}
                                                 showEvidence={false}
                                             />
                                         ))}
@@ -250,7 +280,11 @@ function Chat() {
                                                         }
                                                     >
                                                         <p className="evidence-source">
-                                                            {citation.source}
+                                                            <strong>
+                                                                Source {index + 1}
+                                                            </strong>
+                                                            {citation.source &&
+                                                                ` · ${citation.source}`}
                                                             {citation.section &&
                                                                 ` · ${citation.section}`}
                                                             {citation.page !==
@@ -269,6 +303,15 @@ function Chat() {
                                     </section>
                                 )}
                             </div>
+                        )}
+                        {citations.length === 0 && (
+                            <section className="citation-empty-state">
+                                <h3>Sources and evidence</h3>
+                                <p>
+                                    No citations were returned with this
+                                    response.
+                                </p>
+                            </section>
                         )}
                     </article>
                 </section>

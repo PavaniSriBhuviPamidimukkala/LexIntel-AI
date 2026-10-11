@@ -11,7 +11,7 @@ function App() {
         <main className="app-container">
             <header className="header">
                 <span className="brand-mark" aria-hidden="true">LI</span>
-                <p className="eyebrow">Legal research workspace</p>
+                <p className="eyebrow">Document-grounded legal research</p>
                 <h1>LexIntel AI</h1>
                 <p>
                     Ask questions and explore answers grounded in your legal

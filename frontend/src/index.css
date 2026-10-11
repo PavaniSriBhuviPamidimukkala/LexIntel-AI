@@ -7,8 +7,8 @@
         "Segoe UI",
         sans-serif;
 
-    background: #f6f8fb;
-    color: #1f2937;
+    background: #f3f6f7;
+    color: #26384a;
 
     font-synthesis: none;
     text-rendering: optimizeLegibility;
@@ -25,14 +25,16 @@ body {
     margin: 0;
     min-height: 100vh;
     background:
-        linear-gradient(
-            135deg,
-            #eef2ff,
-            #f8fafc
-        );
+        radial-gradient(ellipse at 15% 0%, rgba(223, 234, 239, 0.7), transparent 34rem),
+        #f5f7f8;
 }
 
 
 #root {
     min-height: 100vh;
+}
+
+::selection {
+    background: #d8e5eb;
+    color: #1b334d;
 }
