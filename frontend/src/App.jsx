@@ -1,69 +1,34 @@
 import { useState } from "react";
-
 import Upload from "./components/Upload";
 import Chat from "./components/Chat";
-
+import "./App.css";
 
 function App() {
-
-    const [document, setDocument] = useState(null);
-
+    const [uploadedDocument, setUploadedDocument] = useState(null);
 
     return (
+        <div className="app-container">
+            <header className="header">
+                <h1>⚖️ LexIntel AI</h1>
+                <p>AI-powered Legal Document Intelligence Platform</p>
+            </header>
 
-        <div style={{
-            maxWidth:"900px",
-            margin:"40px auto",
-            fontFamily:"Arial"
-        }}>
+            <section className="card">
+                <Upload onUploaded={setUploadedDocument} />
 
-            <h1>
-                ⚖️ LexIntel AI
-            </h1>
+                {uploadedDocument && (
+                    <div className="answer-box">
+                        <h3>📄 Uploaded Document</h3>
+                        <p>{uploadedDocument.title}</p>
+                    </div>
+                )}
+            </section>
 
-            <p>
-                AI-powered Legal Document Intelligence Platform
-            </p>
-
-
-            <hr />
-
-
-            <Upload
-                onUploaded={
-                    setDocument
-                }
-            />
-
-
-            {
-                document &&
-                <div>
-
-                    <hr />
-
-                    <h3>
-                        Uploaded Document
-                    </h3>
-
-                    <p>
-                        {document.title}
-                    </p>
-
-                </div>
-            }
-
-
-            <hr />
-
-
-            <Chat />
-
-
+            <section className="card">
+                <Chat />
+            </section>
         </div>
-
     );
 }
-
 
 export default App;
