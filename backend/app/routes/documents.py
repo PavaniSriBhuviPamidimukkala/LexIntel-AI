@@ -8,7 +8,8 @@ import os
 import re
 
 
-from app.database import SessionLocal
+from app.auth import get_current_user
+from app.database import get_db
 from app.core.config import settings
 
 from app.models.legal_document import LegalDocument
@@ -34,20 +35,10 @@ from app.evaluation.performance import timed_function, timed_stage
 
 router = APIRouter(
     prefix="/documents",
-    tags=["Documents"]
+    tags=["Documents"],
+    redirect_slashes=False,
+    dependencies=[Depends(get_current_user)],
 )
-
-
-
-def get_db():
-
-    db = SessionLocal()
-
-    try:
-        yield db
-
-    finally:
-        db.close()
 
 
 def validate_pdf_upload(file: UploadFile) -> None:
@@ -302,7 +293,7 @@ def create_document(
 # ==================================================
 
 @router.get(
-    "/",
+    "",
     response_model=list[DocumentResponse]
 )
 def get_documents(

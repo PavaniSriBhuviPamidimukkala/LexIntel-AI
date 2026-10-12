@@ -1,39 +1,79 @@
-import { useState } from "react";
-import Upload from "./components/Upload";
-import Chat from "./components/Chat";
-import DocumentList from "./components/DocumentList";
+import { lazy, Suspense } from "react";
+import {
+    BrowserRouter,
+    Navigate,
+    Route,
+    Routes,
+} from "react-router-dom";
+import { AuthProvider } from "./auth/AuthContext";
+import { useAuth } from "./auth/useAuth";
+import Navbar from "./components/Navbar";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Ask from "./pages/Ask";
+import Dashboard from "./pages/Dashboard";
+import Documents from "./pages/Documents";
+import Login from "./pages/Login";
+import Upload from "./pages/Upload";
 import "./App.css";
 
-function App() {
-    const [uploadedDocument, setUploadedDocument] = useState(null);
+const EvaluationMetrics = lazy(() => import("./pages/EvaluationMetrics"));
+const AccessibilityPage = lazy(() =>
+    import("./pages/EvaluationMetrics").then((page) => ({
+        default: page.AccessibilityPage,
+    }))
+);
 
+function LoginRoute() {
+    const { isAuthenticated } = useAuth();
+    return isAuthenticated ? <Navigate to="/" replace /> : <Login />;
+}
+
+function AppRoutes() {
     return (
-        <main className="app-container">
-            <header className="header">
-                <span className="brand-mark" aria-hidden="true">LI</span>
-                <p className="eyebrow">Document-grounded legal research</p>
-                <h1>LexIntel AI</h1>
-                <p>
-                    Ask questions and explore answers grounded in your legal
-                    documents.
-                </p>
-            </header>
+        <div className="app-container">
+            <a className="skip-link" href="#main-content">
+                Skip to main content
+            </a>
+            <Navbar />
+            <Suspense
+                fallback={
+                    <main id="main-content" className="page-shell">
+                        <p role="status" aria-live="polite">
+                            Loading page…
+                        </p>
+                    </main>
+                }
+            >
+                <Routes>
+                    <Route path="/login" element={<LoginRoute />} />
+                    <Route element={<ProtectedRoute />}>
+                        <Route path="/" element={<Dashboard />} />
+                        <Route path="/upload" element={<Upload />} />
+                        <Route path="/documents" element={<Documents />} />
+                        <Route path="/ask" element={<Ask />} />
+                        <Route
+                            path="/evaluation-metrics"
+                            element={<EvaluationMetrics />}
+                        />
+                        <Route
+                            path="/evaluation-metrics/accessibility"
+                            element={<AccessibilityPage />}
+                        />
+                    </Route>
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+            </Suspense>
+        </div>
+    );
+}
 
-            <div className="workspace-grid">
-                <aside className="workspace-sidebar">
-                    <section className="card upload-card">
-                        <Upload onUploaded={setUploadedDocument} />
-                    </section>
-                    <section className="card library-card">
-                        <DocumentList uploadedDocument={uploadedDocument} />
-                    </section>
-                </aside>
-
-                <section className="card chat-card">
-                    <Chat />
-                </section>
-            </div>
-        </main>
+function App() {
+    return (
+        <BrowserRouter>
+            <AuthProvider>
+                <AppRoutes />
+            </AuthProvider>
+        </BrowserRouter>
     );
 }
 

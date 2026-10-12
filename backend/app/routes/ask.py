@@ -3,21 +3,19 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.database import SessionLocal
+from app.auth import get_current_user
+from app.database import get_db
 from app.rag.pipeline import rag_pipeline
 from app.schemas.ask import AskResponse
+from app.evaluation.performance import record_query, timed_stage
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/ask", tags=["RAG"])
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+router = APIRouter(
+    prefix="/ask",
+    tags=["RAG"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.post("/", response_model=AskResponse)
@@ -32,11 +30,24 @@ def ask_question(
             detail="Question cannot be empty or contain only whitespace.",
         )
 
+    result = None
     try:
-        return rag_pipeline(question.strip(), db)
+        with timed_stage("end_to_end_response_time"):
+            result = rag_pipeline(question.strip(), db)
+        return result
     except Exception:
         logger.exception("RAG pipeline failed")
         raise HTTPException(
             status_code=503,
             detail="The legal research service is temporarily unavailable.",
+        )
+    finally:
+        citations = result.get("citations", []) if result else []
+        record_query(
+            retrieval_succeeded=bool(citations),
+            similarity_scores=[
+                citation.get("relevance")
+                for citation in citations
+                if isinstance(citation, dict)
+            ],
         )

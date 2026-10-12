@@ -20,6 +20,7 @@ function DocumentList({ uploadedDocument }) {
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
     const [refreshIndex, setRefreshIndex] = useState(0);
+    const [search, setSearch] = useState("");
 
     useEffect(() => {
         let isMounted = true;
@@ -53,7 +54,7 @@ function DocumentList({ uploadedDocument }) {
         };
     }, [refreshIndex]);
 
-    const displayedDocuments = uploadedDocument
+    const allDocuments = uploadedDocument
         ? [
             uploadedDocument,
             ...documents.filter(
@@ -61,6 +62,11 @@ function DocumentList({ uploadedDocument }) {
             ),
         ]
         : documents;
+    const displayedDocuments = allDocuments.filter((document) =>
+        `${document.title} ${document.category ?? ""}`
+            .toLowerCase()
+            .includes(search.trim().toLowerCase())
+    );
     const visibleError = uploadedDocument ? "" : errorMessage;
 
     return (
@@ -70,10 +76,21 @@ function DocumentList({ uploadedDocument }) {
                     <p className="eyebrow">Your research library</p>
                     <h2 id="documents-heading">Documents</h2>
                 </div>
-                <span className="document-count" aria-label={`${displayedDocuments.length} documents`}>
-                    {displayedDocuments.length}
+                <span className="document-count" aria-label={`${allDocuments.length} documents`}>
+                    {allDocuments.length}
                 </span>
             </div>
+            <label className="document-search-label" htmlFor="document-search">
+                Search documents
+            </label>
+            <input
+                id="document-search"
+                className="document-search"
+                type="search"
+                placeholder="Search by document name or category"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+            />
 
             {isLoading && (
                 <p className="status-message status-loading" role="status">
@@ -101,8 +118,17 @@ function DocumentList({ uploadedDocument }) {
             {!isLoading && !visibleError && displayedDocuments.length === 0 && (
                 <p className="empty-state">
                     <span className="empty-state-icon" aria-hidden="true">▤</span>
-                    <span>Your library is ready.</span>
-                    <span>Uploaded legal documents will appear here.</span>
+                    {allDocuments.length === 0 ? (
+                        <>
+                            <span>Your library is ready.</span>
+                            <span>Uploaded legal documents will appear here.</span>
+                        </>
+                    ) : (
+                        <>
+                            <span>No matching documents.</span>
+                            <span>Try a different name or category.</span>
+                        </>
+                    )}
                 </p>
             )}
 
@@ -119,11 +145,13 @@ function DocumentList({ uploadedDocument }) {
                                 <div className="document-info">
                                     <h3 title={document.title}>{document.title}</h3>
                                     <div className="document-metadata">
+                                        <span className="metadata-tag">Stored</span>
                                         {document.category && (
                                             <span className="metadata-tag">
                                                 {document.category}
                                             </span>
                                         )}
+                                        <span>Document #{document.id}</span>
                                         {uploadDate && (
                                             <span>Uploaded {uploadDate}</span>
                                         )}

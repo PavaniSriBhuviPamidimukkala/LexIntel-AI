@@ -34,6 +34,17 @@ try {
 const QUESTION_ERROR_MESSAGE =
     "We couldn't get an answer right now. Please try again.";
 
+function authorizationHeaders() {
+    const stored = sessionStorage.getItem("lexintel.auth");
+    if (!stored) {
+        return {};
+    }
+    const session = JSON.parse(stored);
+    return session.accessToken
+        ? { Authorization: `Bearer ${session.accessToken}` }
+        : {};
+}
+
 function getQuestionErrorMessage(errorBody) {
     const detailMessage =
         typeof errorBody?.detail === "string"
@@ -58,6 +69,53 @@ function getQuestionErrorMessage(errorBody) {
         : QUESTION_ERROR_MESSAGE;
 }
 
+async function readErrorMessage(response, fallback) {
+    try {
+        const errorBody = await response.json();
+        return getQuestionErrorMessage(errorBody);
+    } catch {
+        return fallback;
+    }
+}
+
+export async function login(usernameOrEmail, password) {
+    let response;
+    try {
+        response = await fetch(`${API_URL}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username_or_email: usernameOrEmail,
+                password,
+            }),
+        });
+    } catch {
+        throw new Error(
+            "Unable to reach the authentication service. Check your connection and try again."
+        );
+    }
+
+    if (!response.ok) {
+        throw new Error(
+            await readErrorMessage(response, "Unable to sign in. Please try again.")
+        );
+    }
+    return response.json();
+}
+
+export async function registerUser(username, email, password) {
+    const response = await fetch(`${API_URL}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password }),
+    });
+    if (!response.ok) {
+        throw new Error(
+            await readErrorMessage(response, "Unable to create the account.")
+        );
+    }
+    return response.json();
+}
 
 // Upload PDF
 export async function uploadDocument(file) {
@@ -71,6 +129,7 @@ export async function uploadDocument(file) {
         `${API_URL}/documents/upload`,
         {
             method: "POST",
+            headers: authorizationHeaders(),
             body: formData,
         }
     );
@@ -85,10 +144,35 @@ export async function uploadDocument(file) {
 }
 
 export async function getDocuments() {
-    const response = await fetch(`${API_URL}/documents/`);
+    const response = await fetch(`${API_URL}/documents`, {
+        headers: authorizationHeaders(),
+    });
 
     if (!response.ok) {
         throw new Error("We couldn't load the uploaded documents.");
+    }
+
+    return response.json();
+}
+
+export async function getEvaluationMetrics() {
+    let response;
+
+    try {
+        response = await fetch(`${API_URL}/metrics`, {
+            cache: "no-store",
+            headers: authorizationHeaders(),
+        });
+    } catch {
+        throw new Error(
+            "Unable to reach the metrics service. Check your connection and try again."
+        );
+    }
+
+    if (!response.ok) {
+        throw new Error(
+            `Metrics request failed with status ${response.status}.`
+        );
     }
 
     return response.json();
@@ -102,6 +186,7 @@ export async function askQuestion(question) {
         `${API_URL}/ask/?question=${encodeURIComponent(question)}`,
         {
             method: "POST",
+            headers: authorizationHeaders(),
         }
     );
 

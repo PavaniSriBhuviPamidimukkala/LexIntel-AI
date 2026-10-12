@@ -24,12 +24,17 @@ class Settings(BaseSettings):
 
     GEMINI_API_KEY: SecretStr | None = None
     OLLAMA_BASE_URL: str = "http://localhost:11434"
-    CORS_ALLOWED_ORIGINS: list[str] = ["http://localhost:5173"]
+    CORS_ALLOWED_ORIGINS: list[str] = [
+    "http://localhost:5173",
+    "https://fuzzy-disco-g4p64x75w7g4hwrpp-5173.app.github.dev"
+        ]
     MAX_UPLOAD_SIZE_BYTES: int = 25 * 1024 * 1024
     SQL_ECHO: bool = False
     ENVIRONMENT: str = "development"
     AUTH_MODE: str = "disabled"
     TRUSTED_PROXY_CIDRS: list[str] = []
+    JWT_SECRET_KEY: SecretStr | None = None
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
     @model_validator(mode="after")
     def validate_runtime_settings(self):
@@ -44,8 +49,14 @@ class Settings(BaseSettings):
                 "CORS_ALLOWED_ORIGINS must include at least one trusted origin."
             )
 
-        if self.AUTH_MODE not in {"disabled", "proxy"}:
-            raise ValueError("AUTH_MODE must be either 'disabled' or 'proxy'.")
+        if self.AUTH_MODE not in {"disabled", "proxy", "jwt"}:
+            raise ValueError(
+                "AUTH_MODE must be 'disabled', 'proxy', or 'jwt'."
+            )
+        if self.JWT_ACCESS_TOKEN_EXPIRE_MINUTES <= 0:
+            raise ValueError(
+                "JWT_ACCESS_TOKEN_EXPIRE_MINUTES must be greater than zero."
+            )
 
         try:
             proxy_networks = [
@@ -61,13 +72,24 @@ class Settings(BaseSettings):
             raise ValueError(
                 "TRUSTED_PROXY_CIDRS is required when AUTH_MODE is 'proxy'."
             )
+        if self.AUTH_MODE == "jwt":
+            jwt_secret = (
+                self.JWT_SECRET_KEY.get_secret_value()
+                if self.JWT_SECRET_KEY
+                else ""
+            )
+            if len(jwt_secret.encode("utf-8")) < 32:
+                raise ValueError(
+                    "JWT_SECRET_KEY must contain at least 32 bytes when "
+                    "AUTH_MODE is 'jwt'."
+                )
 
         if (
             self.ENVIRONMENT.casefold() in {"production", "prod"}
-            and self.AUTH_MODE != "proxy"
+            and self.AUTH_MODE not in {"proxy", "jwt"}
         ):
             raise ValueError(
-                "AUTH_MODE must be 'proxy' in production deployments."
+                "AUTH_MODE must be 'proxy' or 'jwt' in production deployments."
             )
 
         if self.LLM_PROVIDER.casefold() == "gemini":

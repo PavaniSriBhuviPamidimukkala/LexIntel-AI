@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { uploadDocument } from "../api/lexintel";
 
-function Upload({ onUploaded }) {
+function Upload({ onUploaded, onUploadStarted }) {
     const [file, setFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
@@ -56,6 +56,7 @@ function Upload({ onUploaded }) {
             setErrorMessage("");
             setSuccessMessage("");
             setIsUploading(true);
+            onUploadStarted?.();
 
             const result = await uploadDocument(file);
             onUploaded(result);

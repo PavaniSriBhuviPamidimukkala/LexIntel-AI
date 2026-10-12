@@ -4,6 +4,7 @@ import time
 from contextlib import contextmanager
 from contextvars import ContextVar
 from functools import wraps
+from math import isfinite
 
 
 PERFORMANCE_STAGES = (
@@ -18,6 +19,10 @@ PERFORMANCE_STAGES = (
 
 _samples = {stage: [] for stage in PERFORMANCE_STAGES}
 _samples_lock = threading.Lock()
+_query_count = 0
+_retrieval_success_count = 0
+_similarity_total = 0.0
+_similarity_sample_count = 0
 _active_capture = ContextVar("evaluation_performance_capture", default=None)
 
 
@@ -73,6 +78,42 @@ def timing_snapshot():
     """Return a thread-safe copy of all process-recorded timings."""
     with _samples_lock:
         return {stage: list(values) for stage, values in _samples.items()}
+
+
+def record_query(retrieval_succeeded, similarity_scores=()):
+    """Record aggregate query metrics without retaining query content."""
+    global _query_count, _retrieval_success_count
+    global _similarity_total, _similarity_sample_count
+
+    scores = []
+    for score in similarity_scores:
+        try:
+            value = float(score)
+        except (TypeError, ValueError):
+            continue
+        if isfinite(value):
+            scores.append(value)
+
+    with _samples_lock:
+        _query_count += 1
+        if retrieval_succeeded:
+            _retrieval_success_count += 1
+        _similarity_total += sum(scores)
+        _similarity_sample_count += len(scores)
+
+
+def query_snapshot():
+    """Return aggregate query counts and similarity without query content."""
+    with _samples_lock:
+        return {
+            "total_queries_asked": _query_count,
+            "retrieval_success_count": _retrieval_success_count,
+            "average_similarity_score": (
+                round(_similarity_total / _similarity_sample_count, 6)
+                if _similarity_sample_count
+                else None
+            ),
+        }
 
 
 def summarize_samples(samples):
