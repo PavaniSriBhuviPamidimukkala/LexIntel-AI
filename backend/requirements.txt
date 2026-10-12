@@ -13,7 +13,7 @@ seaborn==0.13.2
 
 sentence-transformers==5.1.1
 transformers==4.56.2
-torch
+torch==2.2.2
 
 spacy==3.8.7
 nltk==3.9.1
