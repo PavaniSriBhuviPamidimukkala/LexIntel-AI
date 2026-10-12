@@ -8,6 +8,8 @@ pandas==2.3.2
 numpy==2.3.3
 
 scikit-learn==1.7.2
+matplotlib==3.10.6
+seaborn==0.13.2
 
 sentence-transformers==5.1.1
 transformers==4.56.2
