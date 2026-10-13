@@ -1,9 +1,10 @@
 
 import re
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.document_chunk import DocumentChunk
+from app.models.legal_document import LegalDocument
 from app.retrieval.semantic import semantic_search
 from app.retrieval.keyword import keyword_search
 from app.retrieval.hybrid import hybrid_rank
@@ -188,13 +189,21 @@ def metadata_candidate_chunks(chunks, query):
 def search_documents(
     query: str,
     db: Session,
+    user_id: int,
     limit: int = 5,
 ):
     """Search legal chunks using exact-section preference and hybrid ranking."""
     if limit <= 0:
         return []
 
-    chunks = db.query(DocumentChunk).all()
+    chunks = (
+        db.query(DocumentChunk)
+        .join(LegalDocument, DocumentChunk.document_id == LegalDocument.id)
+        .filter(LegalDocument.user_id == user_id)
+        .filter(DocumentChunk.user_id == user_id)
+        .options(joinedload(DocumentChunk.document))
+        .all()
+    )
     chunks = [chunk for chunk in chunks if is_retrievable_chunk(chunk)]
 
     if not chunks:
@@ -209,6 +218,7 @@ def search_documents(
     semantic_scores = semantic_search(
         query,
         db,
+        user_id=user_id,
         candidate_ids=candidate_ids,
     )
     keyword_scores = keyword_search(query, chunks)

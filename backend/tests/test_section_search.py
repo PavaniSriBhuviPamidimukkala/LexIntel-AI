@@ -133,14 +133,29 @@ class TestSectionSearch(unittest.TestCase):
 
     @staticmethod
     def run_search(query, chunks):
+        class FakeQuery:
+            def __init__(self):
+                self.chunks = chunks
+
+            def join(self, *_args, **_kwargs):
+                return self
+
+            def filter(self, *_expressions):
+                return self
+
+            def options(self, *_options):
+                return self
+
+            def all(self):
+                return self.chunks
+
         db = SimpleNamespace(
-            query=lambda _model: SimpleNamespace(
-                all=lambda: chunks
-            )
+            query=lambda _model: FakeQuery()
         )
         searched_candidate_ids = []
 
-        def semantic_search(_query, _db, candidate_ids=None):
+        def semantic_search(_query, _db, user_id, candidate_ids=None):
+            assert user_id == 1
             searched_candidate_ids[:] = candidate_ids or []
             return {chunk_id: 0.9 for chunk_id in searched_candidate_ids}
 
@@ -156,7 +171,7 @@ class TestSectionSearch(unittest.TestCase):
                 },
             ),
         ):
-            results = search_documents(query, db, limit=5)
+            results = search_documents(query, db, user_id=1, limit=5)
 
         return results, searched_candidate_ids
 
@@ -183,7 +198,15 @@ class TestSectionSearch(unittest.TestCase):
         )
         db = SimpleNamespace(
             query=lambda _model: SimpleNamespace(
-                all=lambda: [other_chunk, exact_chunk]
+                join=lambda *_args, **_kwargs: SimpleNamespace(
+                    filter=lambda *_expressions: SimpleNamespace(
+                        filter=lambda *_expressions: SimpleNamespace(
+                            options=lambda *_options: SimpleNamespace(
+                                all=lambda: [other_chunk, exact_chunk]
+                            )
+                        )
+                    )
+                )
             )
         )
 
@@ -200,6 +223,7 @@ class TestSectionSearch(unittest.TestCase):
             results = search_documents(
                 "Explain Section 73 compensation",
                 db,
+                user_id=1,
                 limit=2,
             )
 

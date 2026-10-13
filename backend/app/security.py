@@ -11,7 +11,7 @@ from app.core.config import settings
 class TrustedProxyAuthMiddleware(BaseHTTPMiddleware):
     """Require identity assertions from configured trusted auth proxies."""
 
-    protected_paths = ("/documents", "/ask")
+    protected_paths = ("/documents", "/ask", "/metrics", "/history")
 
     async def dispatch(
         self,

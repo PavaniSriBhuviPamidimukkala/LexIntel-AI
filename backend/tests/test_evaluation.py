@@ -148,7 +148,7 @@ class TestEvaluationMetrics(unittest.TestCase):
 class TestEvaluationRunner(unittest.TestCase):
     @patch("app.evaluation.evaluator.rag_pipeline")
     def test_empty_dataset_returns_zero_metrics(self, mock_search):
-        result = evaluate(db=None, dataset=[])
+        result = evaluate(db=None, user_id=1, dataset=[])
 
         self.assertEqual(result["total_questions"], 0)
         self.assertEqual(result["average_hit_at_k"], 0.0)
@@ -176,6 +176,7 @@ class TestEvaluationRunner(unittest.TestCase):
 
         result = evaluate(
             db=None,
+            user_id=1,
             dataset=[
                 {
                     "question": "Test question",
@@ -196,7 +197,12 @@ class TestEvaluationRunner(unittest.TestCase):
             ]["samples"],
             1,
         )
-        mock_search.assert_called_once_with("Test question", None, limit=5)
+        mock_search.assert_called_once_with(
+            "Test question",
+            None,
+            user_id=1,
+            limit=5,
+        )
 
     @patch("app.evaluation.evaluator.rag_pipeline")
     def test_evaluator_reports_all_metrics_with_expected_chunk(
@@ -225,6 +231,7 @@ class TestEvaluationRunner(unittest.TestCase):
 
         result = evaluate(
             db=None,
+            user_id=1,
             dataset=[
                 {
                     "question": "Test question",

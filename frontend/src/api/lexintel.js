@@ -155,6 +155,22 @@ export async function getDocuments() {
     return response.json();
 }
 
+export async function deleteDocument(documentId) {
+    const response = await fetch(`${API_URL}/documents/${documentId}`, {
+        method: "DELETE",
+        headers: authorizationHeaders(),
+    });
+
+    if (!response.ok) {
+        throw new Error(
+            await readErrorMessage(
+                response,
+                "We couldn't delete this document."
+            )
+        );
+    }
+}
+
 export async function getEvaluationMetrics() {
     let response;
 

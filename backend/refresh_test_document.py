@@ -1,4 +1,5 @@
 
+import argparse
 from pathlib import Path
 
 from pypdf import PdfReader
@@ -14,7 +15,7 @@ DOCUMENT_ID = 24
 PDF_PATH = Path("lexintel_test_upload.pdf")
 
 
-def main():
+def main(user_id):
     if not PDF_PATH.is_file():
         raise FileNotFoundError(f"PDF not found: {PDF_PATH}")
 
@@ -83,11 +84,19 @@ def main():
 
     try:
         with db.begin():
-            document = db.get(LegalDocument, DOCUMENT_ID)
+            document = (
+                db.query(LegalDocument)
+                .filter(
+                    LegalDocument.id == DOCUMENT_ID,
+                    LegalDocument.user_id == user_id,
+                )
+                .first()
+            )
 
             if document is None:
                 raise ValueError(
-                    f"Document ID {DOCUMENT_ID} does not exist"
+                    f"Document ID {DOCUMENT_ID} does not exist "
+                    "or is not owned by the specified user"
                 )
 
             if document.title != "lexintel_test_upload":
@@ -96,14 +105,23 @@ def main():
                 )
 
             # Replace only this document's chunks.
+            owned_document_id = (
+                db.query(LegalDocument.id)
+                .filter(
+                    LegalDocument.id == DOCUMENT_ID,
+                    LegalDocument.user_id == user_id,
+                )
+                .scalar_subquery()
+            )
             db.query(DocumentChunk).filter(
-                DocumentChunk.document_id == DOCUMENT_ID
+                DocumentChunk.document_id == owned_document_id
             ).delete(synchronize_session=False)
 
             for item in prepared_chunks:
                 db.add(
                     DocumentChunk(
                         document_id=DOCUMENT_ID,
+                        user_id=user_id,
                         content=item["content"],
                         page_number=item["page_number"],
                         section=item["section"],
@@ -129,4 +147,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--user-id", type=int, required=True)
+    args = parser.parse_args()
+    main(args.user_id)

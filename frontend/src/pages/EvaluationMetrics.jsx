@@ -28,15 +28,15 @@ const pipelineStages = [
 ];
 
 const metricDescriptions = {
-    "Documents Uploaded": "All legal documents currently stored in PostgreSQL.",
-    "Documents Processed": "Documents with one or more persisted text chunks.",
-    "Total Chunks": "Persisted document chunks available to retrieval.",
-    "Questions Asked": "Valid questions received by this API process since its last start.",
-    "Average Response Time": "Mean end-to-end RAG pipeline time for this API process.",
-    "Retrieval Time": "Mean measured retrieval stage time for this API process.",
-    "Retrieval Successes": "Questions that returned at least one citation.",
+    "Documents Uploaded": "Documents uploaded to your account.",
+    "Documents Processed": "Your documents with one or more persisted text chunks.",
+    "Total Chunks": "Persisted chunks from your documents available to retrieval.",
+    "Questions Asked": "Questions submitted from your account.",
+    "Average Response Time": "Mean recorded end-to-end RAG time for your questions.",
+    "Retrieval Time": "Mean recorded retrieval stage time for your questions.",
+    "Retrieval Successes": "Your questions that returned at least one citation.",
     "Retrieval Success Rate": "Questions with citations divided by all recorded questions.",
-    "Average Citation Relevance": "Mean relevance score of citations returned by this process.",
+    "Average Citation Relevance": "Mean relevance score of citations returned for your questions.",
     "API Status": "Whether this metrics endpoint responded successfully.",
     "Database Status": "Whether the API can connect to and query PostgreSQL.",
 };

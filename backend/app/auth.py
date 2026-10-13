@@ -5,6 +5,7 @@ import jwt
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import InvalidTokenError
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -60,17 +61,26 @@ def get_current_user(
         return None
 
     if settings.AUTH_MODE == "proxy":
-        identity = (
-            request.headers.get("x-auth-request-email")
-            or request.headers.get("x-auth-request-user")
-            or ""
-        ).strip()
+        email_identity = request.headers.get("x-auth-request-email", "").strip()
+        user_identity = request.headers.get("x-auth-request-user", "").strip()
+        identity = email_identity or user_identity
         if not identity:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Authentication is required.",
             )
-        return None
+        identity_column = User.email if email_identity else User.username
+        user = (
+            db.query(User)
+            .filter(func.lower(identity_column) == identity.lower())
+            .first()
+        )
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="The authenticated identity is not registered.",
+            )
+        return user
 
     if not credentials:
         raise HTTPException(
@@ -105,6 +115,18 @@ def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired authentication token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
+
+
+def require_current_user(
+    user: User | None = Depends(get_current_user),
+) -> User:
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="A user-specific authenticated identity is required.",
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user

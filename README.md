@@ -27,18 +27,27 @@ identity provider) to authenticate users, strip any client-supplied
 `X-Auth-Request-*` headers, and set its own verified identity header. Keep the
 API unreachable except through that proxy; the IP allowlist is a trust
 boundary, not a substitute for network isolation.
+Tenant data endpoints reject anonymous requests when `AUTH_MODE=disabled`;
+use JWT or a trusted proxy identity that maps to an existing account.
 
-Create the users table alongside the existing application tables with
-`cd backend && python -m app.db.init_db`. This uses the existing SQLAlchemy
-schema initialization path and does not modify the document or chunk tables.
-Registration and login are available at `/auth/register` and `/auth/login`;
-the `/documents` and `/ask` API routes require bearer authentication when
-`AUTH_MODE=jwt` is enabled.
+For a new database, create all application tables with
+`cd backend && python -m app.db.init_db`. For an existing database, back up the
+database and apply the tenant-isolation migration with
+`cd backend && alembic upgrade head`. The migration adds a nullable
+`legal_documents.user_id` foreign key so existing documents without a known
+owner remain inaccessible rather than being assigned to an arbitrary user.
+New API-created and uploaded documents always receive the authenticated
+owner's ID. Registration and login are available at `/auth/register` and
+`/auth/login`; the `/documents`, `/ask`, `/metrics`, and `/history` APIs require
+a user-specific authenticated identity. In proxy mode, the trusted proxy
+identity must match an existing account.
 
 Set `CORS_ALLOWED_ORIGINS` in `backend/.env` to the exact frontend origin(s)
 used by the deployment. The default allows the local Vite development server.
 The backend upload limit defaults to 25 MiB and can be adjusted with
-`MAX_UPLOAD_SIZE_BYTES`.
+`MAX_UPLOAD_SIZE_BYTES`. Documents, retrieval, chat history, and dashboard
+metrics are scoped to the authenticated user; legacy documents with no owner
+are excluded from every user-facing query.
 
 Copy `frontend/.env.example` to `frontend/.env` for local development. Set
 `VITE_API_URL` to the publicly reachable backend URL for a production build;
@@ -52,10 +61,10 @@ The React app provides `/login`, a dashboard at `/`, document upload at
 `/ask`, and Evaluation Metrics at `/evaluation-metrics`. Protected pages use
 the configured backend authentication mode. The dashboard reads document
 counts from the existing documents API. Evaluation Metrics reads document and
-chunk counts, process-level query counters, timings, and service health from
-`/metrics/`. Query counters reset when the API process restarts and are not
-shared across multiple API workers. Individual query text is not retained by
-the metrics endpoint.
+chunk counts, query statistics, timings, and service health from `/metrics/`.
+Chat history is persisted per user and available from `/history/`; aggregate
+metrics and timing histories are calculated only from that user's records.
+Individual query text is not returned by the metrics endpoint.
 The dashboard's Accessibility link opens `/evaluation-metrics/accessibility`,
 which summarizes implementation checks and recommended follow-up testing. Its
 calculated score is an implementation checklist estimate, not a certified

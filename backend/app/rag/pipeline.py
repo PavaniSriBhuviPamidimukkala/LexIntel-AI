@@ -193,12 +193,13 @@ def build_fallback_answer(results):
 def rag_pipeline(
     question: str,
     db: Session,
+    user_id: int,
     limit: int = 5,
 ):
     """Retrieve legal passages, generate an answer, and attach citations."""
 
     with timed_stage("retrieval_latency"):
-        retrieved = search_documents(question, db, limit)
+        retrieved = search_documents(question, db, user_id, limit)
     results = filter_relevant_results(question, retrieved)
 
     if not results:

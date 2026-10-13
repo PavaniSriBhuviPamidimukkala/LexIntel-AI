@@ -1,12 +1,14 @@
 from sqlalchemy.orm import Session
 
 from app.models.document_chunk import DocumentChunk
+from app.models.legal_document import LegalDocument
 from app.embeddings.generator import generate_embedding
 
 
 def semantic_search(
     query: str,
     db: Session,
+    user_id: int,
     candidate_ids: list[int] | None = None,
 ):
     """
@@ -22,7 +24,10 @@ def semantic_search(
                 query_embedding
             ).label("distance")
         )
+        .join(LegalDocument, DocumentChunk.document_id == LegalDocument.id)
         .filter(DocumentChunk.embedding.isnot(None))
+        .filter(LegalDocument.user_id == user_id)
+        .filter(DocumentChunk.user_id == user_id)
     )
 
     if candidate_ids is not None:

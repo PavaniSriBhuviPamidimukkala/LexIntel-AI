@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes import auth, health, documents, metrics
+from app.routes import auth, health, documents, metrics, history
 from app.routes import ask
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
@@ -24,6 +24,7 @@ app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(documents.router)
 app.include_router(metrics.router)
+app.include_router(history.router)
 app.include_router(
     ask.router
 )

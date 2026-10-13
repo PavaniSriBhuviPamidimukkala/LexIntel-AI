@@ -65,7 +65,7 @@ def _empty_report(limit):
     }
 
 
-def evaluate(db, limit=5, dataset=None):
+def evaluate(db, user_id: int, limit=5, dataset=None):
     """
     Evaluate retrieval and generated response quality against a benchmark.
 
@@ -101,7 +101,12 @@ def evaluate(db, limit=5, dataset=None):
     for item in questions:
         with capture_timings() as run_timings:
             with timed_stage("end_to_end_response_time"):
-                response = rag_pipeline(item["question"], db, limit=limit)
+                response = rag_pipeline(
+                    item["question"],
+                    db,
+                    user_id=user_id,
+                    limit=limit,
+                )
 
         for stage in PERFORMANCE_STAGES:
             question_performance_samples[stage].extend(
@@ -215,12 +220,17 @@ def evaluate(db, limit=5, dataset=None):
 
 
 if __name__ == "__main__":
+    import argparse
+
     from app.database import SessionLocal
     from app.evaluation.report import format_report, write_reports
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--user-id", type=int, required=True)
+    args = parser.parse_args()
     db = SessionLocal()
     try:
-        report = evaluate(db)
+        report = evaluate(db, user_id=args.user_id)
         print(format_report(report))
         json_path, csv_path = write_reports(report)
         print(f"\nReports written to {json_path} and {csv_path}")

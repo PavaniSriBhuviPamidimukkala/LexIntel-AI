@@ -8,12 +8,13 @@ import os
 import re
 
 
-from app.auth import get_current_user
+from app.auth import require_current_user
 from app.database import get_db
 from app.core.config import settings
 
 from app.models.legal_document import LegalDocument
 from app.models.document_chunk import DocumentChunk
+from app.models.user import User
 
 
 from app.schemas.document import (
@@ -37,7 +38,7 @@ router = APIRouter(
     prefix="/documents",
     tags=["Documents"],
     redirect_slashes=False,
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(require_current_user)],
 )
 
 
@@ -258,6 +259,8 @@ def create_document(
 
     document:DocumentCreate,
 
+    current_user: User = Depends(require_current_user),
+
     db:Session=Depends(get_db)
 
 ):
@@ -269,7 +272,8 @@ def create_document(
 
         content=document.content,
 
-        category=document.category
+        category=document.category,
+        user_id=current_user.id,
 
     )
 
@@ -298,6 +302,8 @@ def create_document(
 )
 def get_documents(
 
+    current_user: User = Depends(require_current_user),
+
     db:Session=Depends(get_db)
 
 ):
@@ -305,6 +311,7 @@ def get_documents(
     return (
 
         db.query(LegalDocument)
+        .filter(LegalDocument.user_id == current_user.id)
         .all()
 
     )
@@ -327,6 +334,8 @@ def get_documents(
 def upload_document(
 
     file:UploadFile=File(...),
+
+    current_user: User = Depends(require_current_user),
 
     db:Session=Depends(get_db)
 
@@ -422,6 +431,7 @@ def upload_document(
             }
 
             chunk = DocumentChunk(
+                user_id=current_user.id,
                 content=content,
                 page_number=item["page_number"],
                 section=current_section,
@@ -440,36 +450,21 @@ def upload_document(
 
         title=title,
 
-
         content=full_text,
 
-
-        category="Uploaded PDF"
+        category="Uploaded PDF",
+        user_id=current_user.id,
 
     )
 
 
 
     db.add(document)
-
-    db.commit()
-
-    db.refresh(document)
-
-
-
-
-
-
+    db.flush()
 
     for chunk in chunks:
-
-
-        chunk.document_id=document.id
-
+        chunk.document_id = document.id
         db.add(chunk)
-
-
 
     db.commit()
 
@@ -497,6 +492,8 @@ def search_document(
 
     q:str,
 
+    current_user: User = Depends(require_current_user),
+
     db:Session=Depends(get_db)
 
 ):
@@ -504,7 +501,8 @@ def search_document(
 
     results=search_documents(
         q,
-        db
+        db,
+        user_id=current_user.id,
     )
 
 
@@ -536,3 +534,55 @@ def search_document(
         for chunk,score in results
 
     ]
+
+
+@router.get(
+    "/{document_id}",
+    response_model=DocumentResponse,
+)
+def get_document(
+    document_id: int,
+    current_user: User = Depends(require_current_user),
+    db: Session = Depends(get_db),
+):
+    document = (
+        db.query(LegalDocument)
+        .filter(
+            LegalDocument.id == document_id,
+            LegalDocument.user_id == current_user.id,
+        )
+        .first()
+    )
+    if document is None:
+        raise HTTPException(
+            status_code=403,
+            detail="You do not have access to this document.",
+        )
+    return document
+
+
+@router.delete(
+    "/{document_id}",
+    status_code=204,
+)
+def delete_document(
+    document_id: int,
+    current_user: User = Depends(require_current_user),
+    db: Session = Depends(get_db),
+):
+    document = (
+        db.query(LegalDocument)
+        .filter(
+            LegalDocument.id == document_id,
+            LegalDocument.user_id == current_user.id,
+        )
+        .first()
+    )
+    if document is None:
+        raise HTTPException(
+            status_code=403,
+            detail="You do not have access to this document.",
+        )
+
+    db.delete(document)
+    db.commit()

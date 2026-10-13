@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getDocuments } from "../api/lexintel";
+import { getDocuments, getEvaluationMetrics } from "../api/lexintel";
 
 function Dashboard() {
     const [documents, setDocuments] = useState([]);
+    const [metrics, setMetrics] = useState(null);
     const [errorMessage, setErrorMessage] = useState("");
 
     useEffect(() => {
@@ -21,6 +22,17 @@ function Dashboard() {
                             ? error.message
                             : "Unable to load document activity."
                     );
+                }
+            });
+        getEvaluationMetrics()
+            .then((result) => {
+                if (active) {
+                    setMetrics(result);
+                }
+            })
+            .catch(() => {
+                if (active) {
+                    setMetrics(null);
                 }
             });
         return () => {
@@ -55,7 +67,11 @@ function Dashboard() {
                 <article className="card summary-card">
                     <p className="eyebrow">Your library</p>
                     <p className="summary-value">
-                        {errorMessage ? "—" : documents.length}
+                        {metrics
+                            ? metrics.total_uploaded_documents ?? "—"
+                            : errorMessage
+                                ? "—"
+                                : documents.length}
                     </p>
                     <p>Uploaded documents</p>
                 </article>
@@ -69,6 +85,20 @@ function Dashboard() {
                             ? `Uploaded ${new Date(recentDocument.created_at).toLocaleDateString()}`
                             : errorMessage || "Your latest uploaded document will appear here."}
                     </p>
+                </article>
+                <article className="card summary-card">
+                    <p className="eyebrow">Your activity</p>
+                    <p className="summary-value">
+                        {metrics?.total_queries_asked ?? "—"}
+                    </p>
+                    <p>Questions asked</p>
+                </article>
+                <article className="card summary-card">
+                    <p className="eyebrow">Your retrievals</p>
+                    <p className="summary-value">
+                        {metrics?.retrieval_success_count ?? "—"}
+                    </p>
+                    <p>Questions answered with citations</p>
                 </article>
             </section>
 

@@ -32,6 +32,13 @@ class DocumentChunk(Base):
         nullable=False
     )
 
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", name="fk_document_chunks_user_id_users"),
+        nullable=True,
+        index=True,
+    )
+
     content = Column(
         Text,
         nullable=False

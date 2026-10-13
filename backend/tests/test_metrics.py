@@ -1,4 +1,5 @@
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from fastapi import FastAPI
@@ -6,29 +7,50 @@ from fastapi.testclient import TestClient
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.evaluation import performance
+from app.auth import require_current_user
+from app.models.chat_history import ChatHistory
 from app.routes import metrics
 
 
 class FakeQuery:
     def __init__(self, value):
         self.value = value
+        self.filters = []
+
+    def filter(self, *criteria):
+        self.filters.extend(criteria)
+        return self
+
+    def join(self, *_args, **_kwargs):
+        return self
+
+    def order_by(self, *_args, **_kwargs):
+        return self
 
     def scalar(self):
         return self.value
 
+    def all(self):
+        return self.value
+
 
 class FakeDatabase:
-    def __init__(self, values=(4, 3, 18), fail=False):
+    def __init__(self, values=(4, 3, 18), history=(), fail=False):
         self.values = iter(values)
+        self.history = list(history)
         self.fail = fail
         self.rollback_called = False
+        self.queries = []
 
     def execute(self, _statement):
         if self.fail:
             raise SQLAlchemyError("database unavailable")
 
-    def query(self, _expression):
-        return FakeQuery(next(self.values))
+    def query(self, expression):
+        value = self.history if expression is ChatHistory else next(self.values)
+        query = FakeQuery(value)
+        self.queries.append(query)
+        return query
 
     def rollback(self):
         self.rollback_called = True
@@ -38,6 +60,9 @@ def make_client(database):
     app = FastAPI()
     app.include_router(metrics.router)
     app.dependency_overrides[metrics.get_db] = lambda: database
+    app.dependency_overrides[require_current_user] = (
+        lambda: SimpleNamespace(id=7)
+    )
     return TestClient(app)
 
 
@@ -62,30 +87,33 @@ class TestEvaluationMetrics(unittest.TestCase):
             )
 
     def test_metrics_endpoint_returns_live_counts_and_health(self):
-        database = FakeDatabase()
-        with (
-            patch(
-                "app.routes.metrics.query_snapshot",
-                return_value={
-                    "total_queries_asked": 7,
-                    "retrieval_success_count": 5,
-                    "average_similarity_score": 0.87,
-                },
-            ),
-            patch(
-                "app.routes.metrics.timing_snapshot",
-                return_value={
-                    "end_to_end_response_time": [1.0, 3.0],
-                    "retrieval_latency": [0.2, 0.4],
-                },
-            ),
-        ):
-            response = make_client(database).get("/metrics/")
+        database = FakeDatabase(
+            history=[
+                SimpleNamespace(
+                    response_time_seconds=1.0,
+                    retrieval_time_seconds=0.2,
+                    retrieval_succeeded=True,
+                    average_similarity_score=0.8,
+                ),
+                SimpleNamespace(
+                    response_time_seconds=3.0,
+                    retrieval_time_seconds=0.4,
+                    retrieval_succeeded=False,
+                    average_similarity_score=None,
+                ),
+            ]
+        )
+        response = make_client(database).get("/metrics/")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["total_uploaded_documents"], 4)
         self.assertEqual(response.json()["total_processed_documents"], 3)
         self.assertEqual(response.json()["total_chunks"], 18)
+        self.assertEqual(response.json()["total_queries_asked"], 2)
+        self.assertEqual(response.json()["retrieval_success_count"], 1)
+        self.assertEqual(response.json()["average_similarity_score"], 0.8)
+        self.assertEqual(response.json()["response_time_history"], [1.0, 3.0])
+        self.assertEqual(response.json()["retrieval_time_history"], [0.2, 0.4])
         self.assertEqual(response.json()["average_response_time_seconds"], 2.0)
         self.assertAlmostEqual(
             response.json()["average_retrieval_time_seconds"],
@@ -93,27 +121,13 @@ class TestEvaluationMetrics(unittest.TestCase):
         )
         self.assertEqual(response.json()["api_status"], "healthy")
         self.assertEqual(response.json()["database_status"], "healthy")
+        for query in database.queries:
+            for predicate in query.filters:
+                self.assertEqual(predicate.right.value, 7)
 
     def test_metrics_endpoint_reports_database_outage_without_masking_api(self):
         database = FakeDatabase(fail=True)
-        with (
-            patch(
-                "app.routes.metrics.query_snapshot",
-                return_value={
-                    "total_queries_asked": 0,
-                    "retrieval_success_count": 0,
-                    "average_similarity_score": None,
-                },
-            ),
-            patch(
-                "app.routes.metrics.timing_snapshot",
-                return_value={
-                    "end_to_end_response_time": [],
-                    "retrieval_latency": [],
-                },
-            ),
-            self.assertLogs("app.routes.metrics", level="ERROR"),
-        ):
+        with self.assertLogs("app.routes.metrics", level="ERROR"):
             response = make_client(database).get("/metrics/")
 
         self.assertEqual(response.status_code, 200)

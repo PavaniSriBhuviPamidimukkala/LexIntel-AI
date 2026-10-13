@@ -1,8 +1,10 @@
+import argparse
+
 from app.database import SessionLocal
 from app.retrieval.search import search_documents
 
 
-def test_search():
+def test_search(user_id):
 
     db = SessionLocal()
 
@@ -11,6 +13,7 @@ def test_search():
     results = search_documents(
         query,
         db,
+        user_id=user_id,
         limit=5
     )
 
@@ -34,4 +37,7 @@ def test_search():
 
 
 if __name__ == "__main__":
-    test_search()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--user-id", type=int, required=True)
+    args = parser.parse_args()
+    test_search(args.user_id)

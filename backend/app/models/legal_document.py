@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.sql import func
 
 from pgvector.sqlalchemy import Vector
@@ -11,6 +11,12 @@ class LegalDocument(Base):
     __tablename__ = "legal_documents"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", name="fk_legal_documents_user_id_users"),
+        nullable=True,
+        index=True,
+    )
 
     title = Column(
         String,

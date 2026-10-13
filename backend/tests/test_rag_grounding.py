@@ -93,7 +93,11 @@ class TestRAGGrounding(unittest.TestCase):
             ),
             patch("app.rag.pipeline.generate_answer", side_effect=generate),
         ):
-            response = rag_pipeline("What compensation is available?", None)
+            response = rag_pipeline(
+                "What compensation is available?",
+                None,
+                user_id=1,
+            )
 
         self.assertTrue(response["answer"].startswith(expected_answer))
         self.assertIn(
@@ -110,7 +114,11 @@ class TestRAGGrounding(unittest.TestCase):
             patch("app.rag.pipeline.search_documents", return_value=[]),
             patch("app.rag.pipeline.generate_answer") as generate,
         ):
-            response = rag_pipeline("What does the uploaded document say?", None)
+            response = rag_pipeline(
+                "What does the uploaded document say?",
+                None,
+                user_id=1,
+            )
 
         self.assertEqual(
             response["answer"],
