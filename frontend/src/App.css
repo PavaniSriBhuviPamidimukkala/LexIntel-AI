@@ -278,6 +278,24 @@
     margin-top: 12px;
 }
 
+.field-error {
+    margin: 0;
+}
+
+.account-prompt {
+    margin: 8px 0 0;
+    color: #65758a;
+    font-size: 12px;
+    text-align: center;
+}
+
+.account-prompt a {
+    color: #315b7f;
+    font-weight: 750;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
 .ask-page {
     max-width: 1040px;
     margin: 0 auto;

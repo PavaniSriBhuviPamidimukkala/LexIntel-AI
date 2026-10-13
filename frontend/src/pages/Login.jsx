@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 
 function Login() {
@@ -66,6 +66,10 @@ function Login() {
                     <button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? "Signing in…" : "Sign in"}
                     </button>
+                    <p className="account-prompt">
+                        Don&apos;t have an account?{" "}
+                        <Link to="/register">Create Account</Link>
+                    </p>
                 </form>
             </section>
         </main>

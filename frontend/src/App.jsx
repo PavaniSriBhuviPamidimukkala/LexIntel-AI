@@ -13,6 +13,7 @@ import Ask from "./pages/Ask";
 import Dashboard from "./pages/Dashboard";
 import Documents from "./pages/Documents";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Upload from "./pages/Upload";
 import "./App.css";
 
@@ -46,6 +47,7 @@ function AppRoutes() {
             >
                 <Routes>
                     <Route path="/login" element={<LoginRoute />} />
+                    <Route path="/register" element={<Register />} />
                     <Route element={<ProtectedRoute />}>
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/upload" element={<Upload />} />
